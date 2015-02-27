@@ -2,11 +2,11 @@
 #include <stdlib.h>
 #include "dames.h"
 
-int pnoir   =1
-int pblanc  =5
-int dnoir   =3
-int dblanc  =7
-int cvide   =0
+int pnoir   =1;
+int pblanc  =5;
+int dnoir   =3;
+int dblanc  =7;
+int cvide   =0;
 
 int main (int argc, char * argv[]){
 	
@@ -18,10 +18,13 @@ extern struct game *new_game(int xsize, int ysize){ //pq xsize, ysize, pas tjrs 
 	newG->xsize=xsize;
 	newG->ysize=ysize;
 	int ** board = malloc(xsize*ysize*sizeof(int)); //louche
-	if (board==NULL){return NULL;}
+	if (board==NULL)
+		{return NULL;}
 	//remplir le damier 
-	for(int i=0; i<4; i++){
-		for(int j=0; j<10; j++){
+	int i;
+	int j;
+	for(i=0; i<4; i++){
+		for(j=0; j<10; j++){
 			if ((i+j)%2==0){
 				board[i][j]=cvide;
 			}
@@ -29,14 +32,16 @@ extern struct game *new_game(int xsize, int ysize){ //pq xsize, ysize, pas tjrs 
 				board[i][j]=pnoir;
 			}
 		}
+		j=0;
 	}
-	for(int i=4; i<6; i++){
-		for(int j=0; j<10; j++){			
-				board[i][j]=cvide;			
+	for(i=4; i<6; i++){
+		for(j=0; j<10; j++){			
+			board[i][j]=cvide;			
 		}
+		j=0;
 	}
-	for(int i=6; i<10; i++){
-		for(int j=0; j<10; j++){
+	for(i=6; i<10; i++){
+		for(j=0; j<10; j++){
 			if ((i+j)%2==0){
 				board[i][j]=pblanc;
 			}
@@ -44,6 +49,7 @@ extern struct game *new_game(int xsize, int ysize){ //pq xsize, ysize, pas tjrs 
 				board[i][j]=cvide;
 			}
 		}
+		j=0;
 	}
 	newG->board=board;
 	return newG;
