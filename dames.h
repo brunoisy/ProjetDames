@@ -5,7 +5,7 @@
 #define PLAYER_WHITE    1
 
 /*
- * Structure du jeu.
+ * Structure du jeu.gedit
  * @board représente le plateau de jeu. Chaque case est représentée par
  *         une valeur entière dont la signification est la suivante:
  *         [...|C|T|P] sont les 3 bits de poid faible de chaque valeur
