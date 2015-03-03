@@ -105,11 +105,13 @@ extern int is_move_seq_valid(const struct game *game, const struct move_seq *seq
 	int ** board=game->board;
 	struct coord c_old=seq->c_old;
 	struct coord c_new=seq->c_new;
-	struct coord prev_c_new=prev->c_new;	
+	struct coord prev_c_new=prev->c_new;
+	struct coord prev_c_old=prev->c_old;	
 	int xold=c_old.x;
 	int yold=c_old.y;
 	int xnew=c_new.x;
-	int ynew=c_new.y;	
+	int ynew=c_new.y;
+	int rafle=0;// vaudra 0 si prev==NULL et 1 si non
 	if(xold<0 || xold>game->xsize-1 || yold<0 || yold>game->ysize-1){ // si la case de depart est hors jeu
 		return 0;
 	}
@@ -131,24 +133,33 @@ extern int is_move_seq_valid(const struct game *game, const struct move_seq *seq
 		if(prev_c_new.x != xold||prev_c_new.y != yold){ // si la sequence ne fait pas partie d'une rafle
 			return 0;
 		}
-		//***
+		if(xnew==prev_c_old.x&&ynew==prev_c_old.y){ // si la sequence repasse au-dessus du meme pion que la precedente (aller-retour)
+			return 0;
+		}
+		rafle=1;
 	}
 	int updir=-2*color(piecedep)+1; // direction du haut en fonction de la couleur de la piece deplacee : -1 si blanc, 1 si noir.
-	int pvalue=31>>(30<<piecedep); // valeur de la piece : 1 si dame, 0 si pion
+	int pvalue=31>>(30<<piecedep); // valeur de la piece deplacee : 1 si dame, 0 si pion
 	int deltax=xnew-xold;
 	int deltay=ynew-yold;
 	if(pvalue==0){// si nous bougons un pion
 		if(abs(deltax)==1&&deltay==updir){ // si deplacement d'une case (sans prise):
-			return 1;
+			if(rafle==0){ // si premier deplacement du mouvement
+				return 1;
+			}
+			else{ // si non (car le pion doit prendre une piece)
+				return 0;
+			}
 		}
 		if(abs(deltax)==2&&abs(deltay)==2){ // si deplacement de 2 cases (avec prise)
-			if(board[xold+deltax/2][yold+deltay/2]==cvide){ // si la case intermediare est vide
+			int mval=board[xold+deltax/2][yold+deltay/2]; // valeur de la case situee sur la diagonale de passage du pion
+			if(mval==cvide){ // si la case intermediare est vide
 				return 0;
 			}
-			if(color(board[xold+deltax/2][yold+deltay/2])==color(piecedep)){ // si la piece intermediare est de meme couleur que la piece bougee
+			if(color(mval)==color(piecedep)){ // si la piece intermediare est de meme couleur que la piece bougee
 				return 0;
 			}
-			if(color(board[xold+deltax/2][yold+deltay/2])==-2*color(piecedep)+1){ // si la piece intermediaire est de la couleur adverse 
+			if(color(mval)==-2*color(piecedep)+1){ // si la piece intermediaire est de la couleur adverse 
 				taken->x=xold+deltax/2;
 				taken->y=yold+deltay/2;
 				return 2;		
@@ -158,8 +169,11 @@ extern int is_move_seq_valid(const struct game *game, const struct move_seq *seq
 				return EXIT_FAILURE;			
 			}
 		}
+		else{ // si deplacement illegal
+			return 0;
+		}
 	}
-	if(pvalue==1){// si nous bougons un reine
+	if(pvalue==1){ // si nous bougons un reine
 		if(abs(deltax)!=abs(deltay)){ // si la reine ne se déplace pas en diagonale
 			return 0;
 		}
@@ -189,14 +203,19 @@ extern int is_move_seq_valid(const struct game *game, const struct move_seq *seq
 			}
 		}
 		if (a==0){ // si la reine n'a fait que se deplacer
-			return 1;
+			if(rafle==0){ // si premier déplacement du mouvement
+				return 1;
+			}
+			else{ // si non (car la reine doit prendre une piece ennemie)
+				return 0;
+			}
 		}
-		if(a==1){ // si la reine a pris un pion ennemi
+		if(a==1){ // si la reine a pris une piece ennemie
 			taken->x=takex;
 			taken->y=takey;
 			return 2;
 		}
-		else{ // si la reine a pris plus d'un pion ennemi
+		else{ // si la reine a pris plus d'une piece ennemie
 			return 0;
 		}
 	}
@@ -205,6 +224,12 @@ extern int is_move_seq_valid(const struct game *game, const struct move_seq *seq
 		return EXIT_FAILURE;
 	}
 }
+
+
+
+
+
+
 
 /*
  * color
@@ -215,6 +240,7 @@ extern int is_move_seq_valid(const struct game *game, const struct move_seq *seq
 int color(int piece){
 	return 2>>piece;
 }
+
 
 /*
  * free_board
