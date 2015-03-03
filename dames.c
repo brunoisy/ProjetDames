@@ -133,9 +133,6 @@ extern int is_move_seq_valid(const struct game *game, const struct move_seq *seq
 		if(prev_c_new.x != xold||prev_c_new.y != yold){ // si la sequence ne fait pas partie d'une rafle
 			return 0;
 		}
-		if(xnew==prev_c_old.x&&ynew==prev_c_old.y){ // si la sequence repasse au-dessus du meme pion que la precedente (aller-retour)
-			return 0;
-		}
 		rafle=1;
 	}
 	int updir=-2*color(piecedep)+1; // direction du haut en fonction de la couleur de la piece deplacee : -1 si blanc, 1 si noir.
@@ -179,7 +176,7 @@ extern int is_move_seq_valid(const struct game *game, const struct move_seq *seq
 		}
 		int takex; // abscisse de la piece prise par la reine
 		int takey; // ordonnee de la piece prise par la reine
-		int a=0; // nombre de pions pris par la reine en une sequence. si >1, sequence invalide
+		int pionspris=0; // nombre de pions pris par la reine en une sequence. si >1, sequence invalide
 		int cval; // valeur de la case survolee par la diagonale
 		int i;
 		for(i=1; i<abs(deltax); i++){ // pour tous les elements situes sur la diagonale parcoure par la reine
@@ -194,7 +191,7 @@ extern int is_move_seq_valid(const struct game *game, const struct move_seq *seq
 				if(color(cval)==-2*color(piecedep)+1){ // si cet element est de couleur opposee
 					takex=xold+i*deltax/abs(deltax);
 					takey=yold+i*deltay/abs(deltax);
-					a++;
+					pionspris++;
 				}
 				else{
 					printf("FAIL2");
@@ -202,7 +199,7 @@ extern int is_move_seq_valid(const struct game *game, const struct move_seq *seq
 				}
 			}
 		}
-		if (a==0){ // si la reine n'a fait que se deplacer
+		if (pionspris==0){ // si la reine n'a fait que se deplacer
 			if(rafle==0){ // si premier déplacement du mouvement
 				return 1;
 			}
@@ -210,7 +207,7 @@ extern int is_move_seq_valid(const struct game *game, const struct move_seq *seq
 				return 0;
 			}
 		}
-		if(a==1){ // si la reine a pris une piece ennemie
+		if(pionspris==1){ // si la reine a pris une piece ennemie
 			taken->x=takex;
 			taken->y=takey;
 			return 2;
