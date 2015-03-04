@@ -6,6 +6,9 @@ void free_board(int ** board, int xsize);
 void free_moves(struct move * moves);
 void free_move_seq(struct move_seq *seq);
 int color(int piece);
+void add_move_to_game(struct move * moves, const struct move * addmove);
+int apply_move_seq(struct game * game, struct move_seq * appseq, struct move_seq * prev);
+
 const int cvide   =0;
 const int pnoir   =1;
 const int pblanc  =5;
@@ -14,6 +17,7 @@ const int dblanc  =7;
 
 
 int main (int argc, char * argv[]){
+	// petit test
 	struct game * ng=new_game(10,10);
 	printf("xsize=%i\n", ng->xsize);
 	printf("ysize=%i\n",ng->ysize);
@@ -72,7 +76,7 @@ extern struct game *new_game(int xsize, int ysize){ //pq xsize, ysize, pas tjrs 
 	newG->board=board;
 	newG->xsize=xsize;
 	newG->ysize=ysize;
-	newG->moves=NULL; //pe un premier move vide? 
+	newG->moves=NULL;
 	newG->cur_player=PLAYER_WHITE;
 
 	return newG;
@@ -85,7 +89,7 @@ extern struct game *load_game(int xsize, int ysize, const int **board, int cur_p
 	newG->board=(int **) board;
 	newG->xsize=xsize;
 	newG->ysize=ysize;
-	newG->moves=NULL; //idem newGame
+	newG->moves=NULL;
 	newG->cur_player=cur_player;
 	return newG;
 }
@@ -99,6 +103,78 @@ extern void free_game(struct game *game){
 	game=NULL;	
 }
 
+extern int apply_moves(struct game *game, const struct move *moves){
+	int i=0;
+	while(moves!=NULL){ // tant que les mouvements ne sont pas termines	
+		i=apply_move_seq(game, moves->seq, NULL);
+		if (i==-1){ // s'il y a un mouvement invalide
+			return -1;
+		}
+		game->cur_player=-2*(game->cur_player)+1; // on change de joueur
+		add_move_to_game(game->moves, moves); // on rajoute le mouvement effectue a la liste de moves dans game
+		moves=moves->next;
+	}
+	return 0;
+}
+
+
+/*
+ * add_move_to_game
+ * rajoute un mouvement effectue a la chaine de moves de la partie
+ *
+ * @moves: pointeur vers la structure moves de game
+ * @addmove: pointeur vers la structure move dont on veut rajouter le premier element a game->moves
+ */
+void add_move_to_game(struct move * moves, const struct move * addmove){
+	struct move * newmove; // !!!!!!! FAUX
+	newmove->seq=addmove->seq;
+	newmove->next=NULL;
+	if(moves==NULL){
+		moves=newmove;
+	}
+	struct move * lastmove=moves; // afin de ne pas perdre la reference vers le premier element de la chaine en moves
+	while(lastmove->next!=NULL){ // tant que nous ne sommes pas a la fin de la liste de mouvements
+		lastmove=lastmove->next;
+	}
+	lastmove->next=newmove;
+}
+
+
+/*
+ * apply_move_seq
+ * applique une sequence de mouvements (un mouvement simple) a une partie
+ *
+ * @game: structure de la partie
+ * @appseq: structure de la sequence de mouvements a appliquer a la partie
+ * @prev: séquence précédent immédiatement la séquence à vérifier, NULL s'il @seq est la première séquence du mouvement
+ */
+int apply_move_seq(struct game * game, struct move_seq * appseq, struct move_seq * prev){
+	struct move_seq * seq =appseq; // pour garder la reference au premier element du la chaine en appseq
+	int ** board=game->board;
+	struct coord * taken;
+	struct coord c_old;
+	struct coord c_new;
+	while(seq!=NULL){ // tant que la sequence n'est pas terminee
+		if(is_move_seq_valid(game, seq, prev, taken)==0){ // si la sequence n'est pas valide
+			return -1;
+		}
+		c_old=seq->c_old;
+		c_new=seq->c_new;
+		seq->old_orig=board[c_old.x][c_old.y]; //old_orig contient la valeur entière de la pièce se situant en @c_old avant l'exécution du mouvement
+		board[c_new.x][c_new.y]=board[c_old.x][c_old.y]; // la nouvelle case contient la piece deplacee
+		board[c_old.x][c_old.y]=cvide; // l'ancienne case est maintenant vide
+		if(taken!=NULL){// si une piece a ete prise
+			seq->piece_value=board[taken->x][taken->y];
+			seq->piece_taken=*taken;
+			board[taken->x][taken->y]=cvide; // la case de la piece prise est vide
+		}
+		else{
+			seq->piece_value=0;
+		}
+		seq=seq->next;
+	}
+	return 0;
+}
 
 
 extern int is_move_seq_valid(const struct game *game, const struct move_seq *seq, const struct move_seq *prev, struct coord *taken){
