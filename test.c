@@ -2,9 +2,23 @@
  * Ce fichier contient l'ensemble des fonctions nécessaires à la vérification des fonctions implémentées dans le fichier dames.c
  */
 
-#include <CUnit.h>
+#include <CUnit/Basic.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "dames.h"
+
+int init_suite1(void);
+int clean_suite1(void);
+void verifdep(struct game *);
+void test_new_game(void); //VERIFIER SI C'EST VRAIMENT NECESSAIRE
+void test_load_game(void);
+void test_apply_moves(void);
+void test_is_move_seq_valid(void);
+void test_undo_moves(void);
+
+	
+struct game *game1;
+
 
 /*
  *
@@ -20,7 +34,7 @@ int main()
 
 	/* Ajoute la suite au catalogue */
 	pSuite = CU_add_suite("Suite_1", init_suite1, clean_suite1);
-	if (NULL == psuite) {
+	if (NULL == pSuite) {
 		CU_cleanup_registry();
 		return CU_get_error();
 	}
@@ -50,8 +64,7 @@ int main()
  */
 int init_suite1(void)
 {
-	
-	struct game *game1;
+
 	
 }
 
@@ -74,12 +87,12 @@ void test_new_game(void)
 	
 	game1 = new_game(10,10); //Initialise la partie 
 	
-	CU_ASSERT_EQUAL(*game1.xsize, 10); //Vérifie que le plateau a les bonnes dimensions
-	CU_ASSERT_EQUAL(*game1.ysize, 10);
+	CU_ASSERT_EQUAL((*game1).xsize, 10); //Vérifie que le plateau a les bonnes dimensions
+	CU_ASSERT_EQUAL((*game1).ysize, 10);
 	
-	CU_ASSERT_EQUAL(*game1.cur_player, 1); //Vérifie que le joueur blanc commence bien la partie
+	CU_ASSERT_EQUAL((*game1).cur_player, 1); //Vérifie que le joueur blanc commence bien la partie
 	
-	CU_ASSERT_EQUAL(*game1.move, NULL); //Vérifie que la liste des mouvements exécutés est bien vide
+	CU_ASSERT_EQUAL((game1 -> moves), NULL); //Vérifie que la liste des mouvements exécutés est bien vide
 	
 	verifdep(game1);
 	
@@ -96,14 +109,14 @@ void test_load_game(void)
 	int gameboard[10][10] = {{0,1,0,1,0,0,0,0,0,0},{1,0,1,0,1,0,1,0,1,0},{0,1,0,1,0,1,0,1,0,1},{1,0,1,0,0,0,1,0,1,0},{0,0,0,0,0,0,0,0,0,0},{0,0,5,0,5,0,5,0,0,0},{0,5,0,5,0,5,0,0,0,5},{0,0,0,0,5,0,5,0,5,0},{0,0,0,0,0,0,0,5,0,5},{5,0,5,0,5,0,5,0,5,0}}; 
 	
 	struct game *game2;
-	game2 = load_game(10, 10, &gameboard, 0);//Charge une partie
+	game2 = load_game(10, 10, gameboard, 0);//Charge une partie
 	
-	CU_ASSERT_EQUAL(*game2.xsize, 10); //Vérifie que le plateau a les bonnes dimensions
-	CU_ASSERT_EQUAL(*game2.ysize, 10);
+	CU_ASSERT_EQUAL((*game2).xsize, 10); //Vérifie que le plateau a les bonnes dimensions
+	CU_ASSERT_EQUAL((*game2).ysize, 10);
 	
-	CU_ASSERT_EQUAL(*game1.cur_player, 0); //Vérifie que c'est bien au tour du joueur noir de jouer
+	CU_ASSERT_EQUAL((*game1).cur_player, 0); //Vérifie que c'est bien au tour du joueur noir de jouer
 	
-	CU_ASSERT_PTR_EQUAL(*game1.board, &gameboard);//Vérifie que le jeu se joue bien sur le plateau chargé
+	CU_ASSERT_PTR_EQUAL((*game1).board, &gameboard);//Vérifie que le jeu se joue bien sur le plateau chargé
 	
 }
 
@@ -166,26 +179,26 @@ void test_apply_moves(void)
 	struct coord coord9 = {6,3};
 	struct coord coord10 = {5,4};
 	
-	*ptrseq1.c_old = coord1;
-	*ptrseq1.c_new = coord2;
+	(*ptrseq1).c_old = coord1;
+	(*ptrseq1).c_new = coord2;
 	ptrseq1 -> next = NULL;
-	*ptrseq2.c_old = coord3;
-	*ptrseq2.c_new = coord4;
+	(*ptrseq2).c_old = coord3;
+	(*ptrseq2).c_new = coord4;
 	ptrseq2 -> next = NULL;
-	*ptrseq3.c_old = coord2;
-	*ptrseq3.c_new = coord3;
+	(*ptrseq3).c_old = coord2;
+	(*ptrseq3).c_new = coord3;
 	ptrseq3 -> next = NULL;
-	*ptrseq4.c_old = coord7;
-	*ptrseq4.c_new = coord8;
+	(*ptrseq4).c_old = coord7;
+	(*ptrseq4).c_new = coord8;
 	ptrseq4 -> next = NULL;
-	*ptrseq5.c_old = coord9;
-	*ptrseq5.c_new = coord10;
+	(*ptrseq5).c_old = coord9;
+	(*ptrseq5).c_new = coord10;
 	ptrseq5 -> next = NULL;
-	*ptrseq6.c_old = coord5;
-	*ptrseq6.c_new = coord6;
+	(*ptrseq6).c_old = coord5;
+	(*ptrseq6).c_new = coord6;
 	ptrseq6 -> next = ptrseq7;
-	*ptrseq7.c_old = coord6;
-	*ptrseq7.c_new = coord1;
+	(*ptrseq7).c_old = coord6;
+	(*ptrseq7).c_new = coord1;
 	ptrseq7 -> next = NULL;
 	
 	ptrmove1 -> next = ptrmove2;
@@ -211,7 +224,7 @@ void test_apply_moves(void)
 	for(i=0; i<10; i++){
 		for(j=0; j<10; j++){
 			
-			CU_ASSERT_EQUAL(*game1.board[i][j], pos_fin[i][j]);
+			CU_ASSERT_EQUAL((*game1).board[i][j], pos_fin[i][j]);
 				
 		}
 	}
@@ -261,7 +274,7 @@ void test_apply_moves(void)
 	int gameboard1[10][10] = {{0,0,0,0,0,0,0,0,0,0},{5,0,7,0,0,0,0,0,5,0},{0,0,0,0,0,0,0,0,0,1},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,5,0},{0,1,0,3,0,0,0,1,0,0},{0,0,0,0,0,0,0,0,0,0}};
 	
 	struct game *game3;	
-	game3 = load_game(10, 10, &gameboard1, 1);
+	game3 = load_game(10, 10, gameboard1, 1);
 	
 	struct move_seq *ptrseq_pb1 = (struct move_seq *) malloc(sizeof(struct move_seq));
 	if(ptrseq_pb1 == NULL)
@@ -315,23 +328,23 @@ void test_apply_moves(void)
 	struct coord coord_pn2_fin = {7,0}; //Coordonnées finales du pion noir qui ne doit pas être transformé
 	
 	
-	*ptrseq_pb1.c_old = coord_pb1_init;
-	*ptrseq_pb1.c_new = coord_pb1_fin;
+	(*ptrseq_pb1).c_old = coord_pb1_init;
+	(*ptrseq_pb1).c_new = coord_pb1_fin;
 	ptrseq_pb1 -> next = NULL;
-	*ptrseq_pn1.c_old = coord_pn1_init;
-	*ptrseq_pn1.c_new = coord_pn1_fin;
+	(*ptrseq_pn1).c_old = coord_pn1_init;
+	(*ptrseq_pn1).c_new = coord_pn1_fin;
 	ptrseq_pn1 -> next = NULL;
-	*ptrseq_db.c_old = coord_db_init;
-	*ptrseq_db.c_new = coord_db_fin;
+	(*ptrseq_db).c_old = coord_db_init;
+	(*ptrseq_db).c_new = coord_db_fin;
 	ptrseq_db -> next = NULL;
-	*ptrseq_dn.c_old = coord_dn_init;
-	*ptrseq_dn.c_new = coord_dn_fin;
+	(*ptrseq_dn).c_old = coord_dn_init;
+	(*ptrseq_dn).c_new = coord_dn_fin;
 	ptrseq_dn -> next = NULL;
-	*ptrseq_pb2.c_old = coord_pb2_init;
-	*ptrseq_pb2.c_new = coord_pb2_fin;
+	(*ptrseq_pb2).c_old = coord_pb2_init;
+	(*ptrseq_pb2).c_new = coord_pb2_fin;
 	ptrseq_pb2 -> next = NULL;
-	*ptrseq_pn2.c_old = coord_pn2_init;
-	*ptrseq_pn2.c_new = coord_pn2_fin;
+	(*ptrseq_pn2).c_old = coord_pn2_init;
+	(*ptrseq_pn2).c_new = coord_pn2_fin;
 	ptrseq_pn2 -> next = NULL;
 	
 	ptrmove_pb1 -> seq = ptrseq_pb1;
@@ -356,7 +369,7 @@ void test_apply_moves(void)
 	for(i2 = 0; i2 < 10; i2++){
 		for(j2 = 0; j2 < 10; j2++){
 			
-			CU_ASSERT_EQUAL(*game3.board[i2][j2], gameboard1_final[i2][j2]);
+			CU_ASSERT_EQUAL((*game3).board[i2][j2], gameboard1_final[i2][j2]);
 			
 		}	
 	}
@@ -387,10 +400,10 @@ void test_apply_moves(void)
 	
 	/* Vérifie qu'un mouvement non-valide est signalé */
 	
-	int gameboard2 = {{1,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0}};
+	int gameboard2[10][10] = {{1,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0}};
 	
 	struct game *game4;
-	game4 = load_game(10, 10, &gameboard2, 0);
+	game4 = load_game(10, 10, &(&gameboard2), 0);
 	
 	struct move_seq *ptrseq_err = (struct move_seq *) malloc(sizeof(struct move_seq));
 	if (ptrseq_err == NULL)
@@ -403,8 +416,8 @@ void test_apply_moves(void)
 	struct coord coord_err1 = {0,0};
 	struct coord coord_err2 = {3,8};
 	
-	*ptrseq_err.c_old = coord_err1;
-	*ptrseq_err.c_new = coord_err2;
+	(*ptrseq_err).c_old = coord_err1;
+	(*ptrseq_err).c_new = coord_err2;
 	ptrseq_err -> next = NULL;
 	
 	ptrmove_err -> seq = ptrseq_err;
@@ -437,7 +450,7 @@ void test_apply_moves(void)
 	int gameboard3[10][10] = {{1,0,0,0,0,0,0,0,0,0},{0,5,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0}};
 	
 	struct game *game5;
-	game5 = load_game(10, 10, &gameboard3, 0);
+	game5 = load_game(10, 10, &(&gameboard3), 0);
 	
 	struct move_seq *ptrseq_end = (struct move_seq *) malloc(sizeof(struct move_seq));
 	if (ptrseq_err == NULL)
@@ -450,8 +463,8 @@ void test_apply_moves(void)
 	struct coord coord_end1 = {0,0};
 	struct coord coord_end2 = {2,2};
 	
-	*ptrseq_end.c_old = coord_end1;
-	*ptrseq_end.c_new = coord_end2;
+	(*ptrseq_end).c_old = coord_end1;
+	(*ptrseq_end).c_new = coord_end2;
 	ptrseq_end -> next = NULL;
 	
 	ptrmove_end -> seq = ptrseq_end;
@@ -476,7 +489,7 @@ void test_is_move_seq_valid(void)
 	int gameboardvalid[10][10] = {{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,1,0,0,0,0,0,0},{0,0,5,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,7,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0}};
 	
 	struct game *gameval;
-	gameval = load_game(10, 10, gameboardvalid[10][10], 1);
+	gameval = load_game(10, 10, &(&gameboardvalid), 1);
 	
 	struct move_seq *seq_casedevant = (struct move_seq *) malloc(sizeof(struct move_seq)); //Un pion doit se déplacer en diagonale
 	if (seq_casedevant == NULL)
@@ -514,29 +527,29 @@ void test_is_move_seq_valid(void)
 	struct coord dame = {2,1}; 
 	struct coord valid = {4,1};
 	
-	*seq_casedevant.c_old = coord_pb;
-	*seq_casedevant.c_new = casedevant;
+	(*seq_casedevant).c_old = coord_pb;
+	(*seq_casedevant).c_new = casedevant;
 	seq_casedevant -> next = NULL;
-	*seq_casederriere.c_old = coord_pb;
-	*seq_casederriere.c_new = casederriere;
+	(*seq_casederriere).c_old = coord_pb;
+	(*seq_casederriere).c_new = casederriere;
 	seq_casederriere -> next = NULL;
-	*seq_casevide.c_old = casevide;
-	*seq_casevide.c_new = casedevant;
+	(*seq_casevide).c_old = casevide;
+	(*seq_casevide).c_new = casedevant;
 	seq_casevide -> next = NULL;
-	*seq_sautecasevide.c_old = coord_pb;
-	*seq_sautecasevide.c_new = sautecasevide;
+	(*seq_sautecasevide).c_old = coord_pb;
+	(*seq_sautecasevide).c_new = sautecasevide;
 	seq_sautecasevide -> next = NULL;
-	*seq_mauvaisjoueur.c_old = coord_pn;
-	*seq_mauvaisjoueur.c_new = mauvaisjoueur;
+	(*seq_mauvaisjoueur).c_old = coord_pn;
+	(*seq_mauvaisjoueur).c_new = mauvaisjoueur;
 	seq_mauvaisjoueur -> next = NULL;
-	*seq_dame.c_old = coord_db;
-	*seq_dame.c_new = dame;
+	(*seq_dame).c_old = coord_db;
+	(*seq_dame).c_new = dame;
 	seq_dame -> next = NULL;
-	*seq_caseoccupee.c_old = coord_pb;
-	*seq_caseoccupee.c_new = coord_pn;
-	seq_casoccupee -> next = NULL;
-	*seq_plusieurspions.c_old = coord_pb;
-	*seq_plusieurspions.c_new = valid;
+	(*seq_caseoccupee).c_old = coord_pb;
+	(*seq_caseoccupee).c_new = coord_pn;
+	seq_caseoccupee -> next = NULL;
+	(*seq_plusieurspions).c_old = coord_pb;
+	(*seq_plusieurspions).c_new = valid;
 	seq_plusieurspions -> next = NULL;
 	
 	struct coord *coordcapture;
@@ -594,16 +607,16 @@ void verifdep(struct game *gamev)
 		
 			if(j < 4 && ((i+j)&1) ) //Les pions se situent sur les cases dont la somme des coordonnées est impaire
 			{
-				CU_ASSERT_EQUAL(*gamev.board[i][j], 1); //Vérifie l'emplacement des pions noirs
+				CU_ASSERT_EQUAL((*gamev).board[i][j], 1); //Vérifie l'emplacement des pions noirs
 			}
 			else if(j > 5 && ((i+j)&1) ) //Les pions se situent sur les cases dont la somme des coordonnées est impaire
 			{
-				CU_ASSERT_EQUAL(*gamev.board[i][j], 5); //Vérifie l'emplacement des pions blancs
+				CU_ASSERT_EQUAL((*gamev).board[i][j], 5); //Vérifie l'emplacement des pions blancs
 			}
 			else
 			{
-				CU_ASSERT_NOT_EQUAL(*gamev.board[i][j], 1); //Vérifie que les autres cases sont bien vides
-				CU_ASSERT_NOT_EQUAL(*gamev.board[i][j], 5); 
+				CU_ASSERT_NOT_EQUAL((*gamev).board[i][j], 1); //Vérifie que les autres cases sont bien vides
+				CU_ASSERT_NOT_EQUAL((*gamev).board[i][j], 5); 
 			}
 			
 		}
