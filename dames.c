@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "dames.h"
 
+int change_player(int cur_player);
 int ** make_empty_board(int xsize, int ysize);
 int ** copy_board(int xsize, const int ** board);
 void free_board(int ** board, int xsize);
@@ -14,6 +15,7 @@ void add_move_to_game(struct game * game, const struct move * addmove);
 int apply_move_seq(struct game * game, struct move_seq * appseq, struct move_seq * prev);
 int undo_move_seq(struct game *game);
 
+
 const int cvide   =0;
 const int pnoir   =1;
 const int pblanc  =5;
@@ -22,17 +24,18 @@ const int dblanc  =7;
 
 
 int main (int argc, char * argv[]){ 
-	printf("test new_game&&print_board\n");
+	//printf("test new_game&&print_board\n");
 	struct game * ng=new_game(10,10);
-	printf("xsize=%i\n", ng->xsize);
+/*	printf("xsize=%i\n", ng->xsize);
 	printf("ysize=%i\n",ng->ysize);
 	printf("cur_player=%i\n",ng->cur_player);
 	print_board(ng);
-
-	printf("\ntest is_move_seq_valid\n");
+*/
+	//printf("\ntest is_move_seq_valid\n");
 	struct move * moves=(struct move *)malloc(sizeof(struct move));
 	struct move_seq * seq=(struct move_seq *)malloc(sizeof(struct move_seq));
 	struct coord * taken=(struct coord *)malloc(sizeof(struct coord));
+
 	moves->next=NULL;
 	moves->seq=seq;
 	seq->next=NULL;
@@ -44,42 +47,19 @@ int main (int argc, char * argv[]){
 	c_new.y=5;
 	seq->c_old=c_old;
 	seq->c_new=c_new;
-	printf("%i\n",is_move_seq_valid(ng, seq, NULL, taken));
-	
-	free(taken);
-	free_moves(moves);
-	free_game(ng);
-/*
+	//struct move * moves2=copy_moves(moves);
+	//printf("moves %p moves2 %p", moves, moves2);
+	//printf("moves->seq %p moves2->seq %p", moves->seq, moves2->seq);
+	//printf("%i\n",is_move_seq_valid(ng, seq, NULL, taken));
 	printf("\ntest apply_moves\n");
-	struct move * moves=(struct move *)malloc(sizeof(struct move));
-	struct move_seq * seq=(struct move_seq *)malloc(sizeof(struct move_seq));
-	moves->next=NULL;
-	moves->seq=seq;
-	seq->next=NULL;
-	struct coord c_old;
-	struct coord c_new;
-	c_old.x=0;
-	c_old.y=4;
-	c_new.x=1;
-	c_new.y=5;
-	seq->c_old=c_old;
-	seq->c_new=c_new;
 	apply_moves(ng, moves);
 	print_board(ng);
-	free_moves(moves);
+	printf("\ntest undo_moves\n");
+	undo_moves(ng,1);
+	print_board(ng);
+	free(taken);
+	//free_moves(moves); //Il semblerait que la fonction apply_moves libere deja moves, pe du a une mauvaise copie
 	free_game(ng);
-
-	printf("\ntest load_game\n");
-	int ** board=make_empty_board(10,10);
-	int i;
-	int j;
-	for(i=0;i<10;i++){
-		for(j=0;j<10;j++){
-			board[i][j]=i+j;
-		}
-	}
-	print_board(load_game(10,10,board,PLAYER_WHITE));
-*/
 }
 
 
@@ -152,10 +132,10 @@ extern void free_game(struct game *game){
 extern int apply_moves(struct game *game, const struct move *moves){
 	struct move * movestoapply=copy_moves(moves);
 	struct move * tobefreed=movestoapply;
-	while(movestoapply!=NULL){ // tant que les mouvements ne sont pas termines	
+	while(movestoapply!=NULL){ // tant que les mouvements ne sont pas termines
 		if (apply_move_seq(game, movestoapply->seq, NULL)==-1) // appliquer la sequence, et s'il y a un mouvement invalide
 			return -1;
-		game->cur_player=-2*(game->cur_player)+1; // on change de joueur
+		game->cur_player=change_player(game->cur_player); // on change de joueur
 		add_move_to_game(game, movestoapply); // on rajoute le mouvement effectue a la liste de moves dans game
 		movestoapply=movestoapply->next; 	
 	}
@@ -201,7 +181,7 @@ extern int is_move_seq_valid(const struct game *game, const struct move_seq *seq
 	int deltay=ynew-yold;
 	if(pvalue==0){// si nous bougons un pion
 		if(abs(deltax)==1&&deltay==updir){ // si deplacement d'une case (sans prise):
-			if(rafle==0){ // si premier deplacement du mouvement
+			if(rafle==0) // si premier deplacement du mouvement
 				return 1;
 			else // si non (car le pion doit prendre une piece)
 				return 0;
@@ -291,7 +271,7 @@ extern void print_board(const struct game *game){
 	int j;
 	for(j=0;j<10;j++){ // pr chaque ligne
 		for(i=0;i<10;i++){
-			printf(" %i",board[i][j]);// imprimer la colonne
+			printf(" %i",board[i][j]);// imprimer chaque element
 		}
 		printf("\n");
 	}
@@ -315,6 +295,17 @@ extern void print_board(const struct game *game){
 
 
 /*
+ * change_player
+ * renvoie le joueur suivant (0 si 1, 1 si 0)
+ *
+ * @cur_player: joueur actuel
+ */
+int change_player(int cur_player){
+	return 1-cur_player;
+}
+
+
+/*
  * copy_moves
  * cree une liste chainee de mouvements identique a celle passee en argument, mais pointée par un autre pointeur
  *
@@ -323,14 +314,18 @@ extern void print_board(const struct game *game){
 struct move* copy_moves(const struct move* moves){
 	if (moves==NULL)
 		return NULL;
-	struct move * newmoves=malloc(sizeof(struct move));
+	struct move * newmoves=(struct move *)malloc(sizeof(struct move));
+	if(newmoves==NULL)
+		return NULL;
 	struct move * nthmove;
 	struct move * nextmove;
 	*newmoves=*moves;
 	nthmove=newmoves;
 	while(nthmove->next!=NULL){
 		nthmove->seq=copy_move_seq(nthmove->seq);
-		nextmove=malloc(sizeof(struct move));
+		nextmove=(struct move *)malloc(sizeof(struct move));
+		if(nextmove==NULL)
+			return NULL;
 		*nextmove=*(nthmove->next);
 		nthmove->next=nextmove;
 		nthmove=nextmove;
@@ -348,13 +343,13 @@ struct move* copy_moves(const struct move* moves){
 struct move_seq* copy_move_seq(const struct move_seq* seq){
 	if (seq==NULL)
 		return NULL;
-	struct move_seq * newseq=malloc(sizeof(struct move_seq));
+	struct move_seq * newseq=(struct move_seq *)malloc(sizeof(struct move_seq));
 	struct move_seq * nthseq;
 	struct move_seq * nextseq;
 	*newseq=*seq;
 	nthseq=newseq;
 	while(nthseq->next!=NULL){
-		nextseq=malloc(sizeof(struct move_seq));
+		nextseq=(struct move_seq *)malloc(sizeof(struct move_seq));
 		*nextseq=*(nthseq->next);
 		nthseq->next=nextseq;
 		nthseq=nextseq;
@@ -435,10 +430,11 @@ int apply_move_seq(struct game * game, struct move_seq * appseq, struct move_seq
 	struct coord c_old;
 	struct coord c_new;
 	while(seq!=NULL){ // tant que la sequence n'est pas terminee
-		if(is_move_seq_valid(game, seq, prev, taken)==0) // si la sequence n'est pas valide
+		if(is_move_seq_valid(game, seq, prev, taken)==0){ // si la sequence n'est pas valide
 			free(taken);
 			taken=NULL;
 			return -1;
+		}
 		c_old=seq->c_old;
 		c_new=seq->c_new;
 		seq->old_orig=board[c_old.x][c_old.y]; //old_orig contient la valeur entière de la pièce se situant en @c_old avant l'exécution du mouvement
@@ -458,6 +454,7 @@ int apply_move_seq(struct game * game, struct move_seq * appseq, struct move_seq
 		}
 		else
 			seq->piece_value=0;
+		prev=seq;
 		seq=seq->next;
 	}
 	free(taken);
@@ -510,6 +507,7 @@ void free_moves(struct move *moves){
 		moves=NULL;
 		moves=nextmoves;
 	}
+printf("infreemoves\n");
 }
 
 
@@ -553,6 +551,6 @@ int undo_move_seq(struct game *game){
 			board[piece_taken.x][piece_taken.y]=seq->piece_value; // la piece prise reapparait
 		seq=seq->next;
 	}
-	game->cur_player=-2*(game->cur_player)+1; // on change de joueur
+	game->cur_player=change_player(game->cur_player); // on change de joueur
 	return 0;
 }
