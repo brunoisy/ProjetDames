@@ -16,6 +16,8 @@ void test_apply_moves(void);
 void test_is_move_seq_valid(void);
 void test_undo_moves(void);
 
+int ** make_empty_board(int xsize, int ysize); // AJOUT DE BRUNO, pour faire des int ** board :)
+
 	
 struct game *game1;
 
@@ -274,7 +276,7 @@ void test_apply_moves(void)
 	int gameboard1[10][10] = {{0,0,0,0,0,0,0,0,0,0},{5,0,7,0,0,0,0,0,5,0},{0,0,0,0,0,0,0,0,0,1},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,5,0},{0,1,0,3,0,0,0,1,0,0},{0,0,0,0,0,0,0,0,0,0}};
 	
 	struct game *game3;	
-	game3 = load_game(10, 10, gameboard1, 1);
+	game3 = load_game(10, 10, &gameboard1, 1);
 	
 	struct move_seq *ptrseq_pb1 = (struct move_seq *) malloc(sizeof(struct move_seq));
 	if(ptrseq_pb1 == NULL)
@@ -621,5 +623,28 @@ void verifdep(struct game *gamev)
 			
 		}
 	} 
+}
 
+
+
+
+
+/*
+ * make_empty_board
+ * crée un damier vide (sans pions)
+ *
+ * @xsize: taille des abscisses du plateau
+ * @ysize: taille des ordonnees du plateau
+ */
+int ** make_empty_board(int xsize, int ysize){
+	int ** board = (int **) malloc((size_t)xsize*sizeof(int *));
+	if (board==NULL)
+		return NULL;
+	int x;
+	for(x=0;x<xsize;x++){
+		board[x]=(int *) malloc((size_t)ysize*sizeof(int));
+		if (board[x]==NULL)
+			return NULL;
+	}
+	return board;
 }
