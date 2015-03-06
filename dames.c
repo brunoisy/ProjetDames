@@ -13,6 +13,7 @@ struct move_seq* copy_move_seq(const struct move_seq* seq);
 int color(int piece);
 void add_move_to_game(struct game * game, const struct move * addmove);
 int apply_move_seq(struct game * game, struct move_seq * appseq, struct move_seq * prev);
+int is_wining(struct game * game, int cur_player);
 int undo_move_seq(struct game *game);
 
 
@@ -124,8 +125,10 @@ extern int apply_moves(struct game *game, const struct move *moves){
 	struct move * movestoapply=copy_moves(moves);
 	struct move * tobefreed=movestoapply;
 	while(movestoapply!=NULL){ // tant que les mouvements ne sont pas termines
-		if (apply_move_seq(game, movestoapply->seq, NULL)==-1) // appliquer la sequence, et s'il y a un mouvement invalide
+		if (apply_move_seq(game, movestoapply->seq, NULL)==-1) // appliquer le mouvement, et s'il y a une sequence invalide
 			return -1;
+		if(is_wining(game, game->cur_player)==1) // si le joueur a gagne la partie
+			return 1;
 		game->cur_player=change_player(game->cur_player); // on change de joueur
 		add_move_to_game(game, movestoapply); // on rajoute le mouvement effectue a la liste de moves dans game
 		movestoapply=movestoapply->next; 	
@@ -416,10 +419,10 @@ int ** copy_board(int xsize, const int **board){
 
 /*
  * apply_move_seq
- * applique une sequence de mouvements (un mouvement simple) a une partie
+ * applique toutes les sequence d'un mouvement (unique) a une partie
  *
  * @game: pointeur vers la structure de la partie
- * @appseq: pointeur vers la structure du mouvement a appliquer
+ * @appseq: pointeur vers la structure de la sequence du mouvement a appliquer
  * @prev: pointeur vers la séquence précédent immédiatement la séquence à vérifier, NULL s'il @seq est la première séquence du mouvement
  */
 int apply_move_seq(struct game * game, struct move_seq * appseq, struct move_seq * prev){
@@ -459,6 +462,27 @@ int apply_move_seq(struct game * game, struct move_seq * appseq, struct move_seq
 	free(taken);
 	taken=NULL;
 	return 0;
+}
+
+
+/*
+ * is_wining
+ * renvoie 1 si le joueur actuel a gagne la partie, 0 si non
+ *
+ * @game: pointeur vers la structure de jeu
+ * @cur_player: joueur actuel
+ */
+int is_wining(struct game * game, int cur_player){
+	int ** board=game->board;
+	int i;
+	int j;
+	for(i=0;i<10;i++){
+		for(j=0;j<10;j++){
+			if(color(board[i][j])==1-cur_player)
+				return 0;
+		}
+	}
+	return 1;
 }
 
 
