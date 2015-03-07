@@ -1,7 +1,7 @@
 /*
  * Ce fichier contient l'ensemble des fonctions nécessaires à la vérification des fonctions implémentées dans le fichier dames.c
  */
-
+ 
 #include <CUnit/Basic.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,7 +10,7 @@
 int init_suite1(void);
 int clean_suite1(void);
 void verifdep(struct game *);
-void test_new_game(void); //VERIFIER SI C'EST VRAIMENT NECESSAIRE
+void test_new_game(void);
 void test_load_game(void);
 void test_apply_moves(void);
 void test_is_move_seq_valid(void);
@@ -35,7 +35,7 @@ int main()
 		return CU_get_error();
 
 	/* Ajoute la suite au catalogue */
-	pSuite = CU_add_suite("Suite_1", init_suite1, clean_suite1);
+	pSuite = CU_add_suite("Suite_1", NULL, NULL);//init_suite1, clean_suite1);
 	if (NULL == pSuite) {
 		CU_cleanup_registry();
 		return CU_get_error();
@@ -53,32 +53,33 @@ int main()
 	}
 	
 	/* Exécute les tests et affiche les erreurs */
+	CU_basic_set_mode(CU_BRM_SILENT);
 	CU_basic_run_tests();
-	CU_basic_show_failures(CU_get_failure_list());
 
 	/* Libère les ressources utilisées par le catalogue */
 	CU_cleanup_registry();
-
+	return CU_get_error();
 }
-
 /*
+ *
  * Initialise les données nécessaires à l'exécution des tests
- */
+ *
 int init_suite1(void)
 {
 
 	
 }
 
-/*
+ *
  * Libère les données utilisées dans l'exécution des tests
- */
+ *
 int clean_suite1(void)
 {
 	
 	//LIBERER MEMOIRE MOVES
 	
 }
+*/
 
 /*
  * Cette fonction crée une partie et vérifie que le plateau a les bonnes dimensions, que le joueur qui commence à jouer 
@@ -107,18 +108,40 @@ void test_new_game(void)
 void test_load_game(void)
 {
 	
-	/* Crée un plateau de jeu probable */
-	int gameboard[10][10] = {{0,1,0,1,0,0,0,0,0,0},{1,0,1,0,1,0,1,0,1,0},{0,1,0,1,0,1,0,1,0,1},{1,0,1,0,0,0,1,0,1,0},{0,0,0,0,0,0,0,0,0,0},{0,0,5,0,5,0,5,0,0,0},{0,5,0,5,0,5,0,0,0,5},{0,0,0,0,5,0,5,0,5,0},{0,0,0,0,0,0,0,5,0,5},{5,0,5,0,5,0,5,0,5,0}}; 
+	int ** gameboard = make_empty_board(10,10);
+	
+	int i;
+	int j;
+	for(i=0; i<10;i++){
+		for(j=0; j<4;j++){
+			if ((i+j)%2==0)
+				gameboard[i][j]=0;
+			else
+				gameboard[i][j]=1;
+		}
+		for(j=4;j<6;j++){
+			gameboard[i][j]=0;
+		}
+		for(j=6;j<10;j++){
+			if ((i+j)%2==0)
+				gameboard[i][j]=0;
+			else
+				gameboard[i][j]=5;
+		}
+	}
 	
 	struct game *game2;
-	game2 = load_game(10, 10, gameboard, 0);//Charge une partie
+	game2 = load_game(10, 10,(const int **) gameboard, 0);//Charge une partie
 	
 	CU_ASSERT_EQUAL((*game2).xsize, 10); //Vérifie que le plateau a les bonnes dimensions
 	CU_ASSERT_EQUAL((*game2).ysize, 10);
 	
-	CU_ASSERT_EQUAL((*game1).cur_player, 0); //Vérifie que c'est bien au tour du joueur noir de jouer
+	CU_ASSERT_EQUAL((*game2).cur_player, 0); //Vérifie que c'est bien au tour du joueur noir de jouer
 	
-	CU_ASSERT_PTR_EQUAL((*game1).board, &gameboard);//Vérifie que le jeu se joue bien sur le plateau chargé
+	verifdep(game2);//Vérifie que le jeu se joue bien sur le plateau chargé
+	
+	free(gameboard);
+	free_game(game2);
 	
 }
 
@@ -128,6 +151,22 @@ void test_load_game(void)
 void test_apply_moves(void)
 {
 	
+	/*
+	
+	  0_1_2_3_4_5_6_7_8_9		  0_1_2_3_4_5_6_7_8_9
+	0|0 1 0 1 0 1 0 1 0 1		0|0 1 0 1 0 1 0 1 0 1
+	1|1 0 1 0 1 0 1 0 1 0		1|1 0 1 0 1 0 1 0 1 0
+	2|0 1 0 1 0 1 0 1 0 1		2|0 1 0 1 0 1 0 1 0 1
+	3|1 0 1 0 1 0 1 0 1 0		3|1 0 1 0 5 0 0 0 1 0
+	4|0 0 0 0 0 0 0 0 0 0  =>	4|0 0 0 0 0 0 0 0 0 0
+	5|0 0 0 0 0 0 0 0 0 0		5|5 0 0 0 0 0 0 0 0 0	
+	6|0 5 0 5 0 5 0 5 0 5		6|0 0 0 5 0 0 0 5 0 5	1 = pion noir
+	7|5 0 5 0 5 0 5 0 5 0		7|5 0 5 0 0 0 5 0 5 0	3 = dame noir
+	8|0 5 0 5 0 5 0 5 0 5		8|0 5 0 5 0 5 0 5 0 5	5 = pion blanc
+	9|5 0 5 0 5 0 5 0 5 0		9|5 0 5 0 5 0 5 0 5 0	7 = dame blanche
+	
+	*/	
+		
 	/* Crée une suite de mouvements valides */
 	struct move_seq *ptrseq1 = (struct move_seq *) malloc(sizeof(struct move_seq));
 	if(ptrseq1 == NULL) 
@@ -219,8 +258,35 @@ void test_apply_moves(void)
 	/* Vérifie une séquence de plusieurs mouvements qui se suivent */
 	apply_moves(game1, ptrmove1);
 	
-	int pos_fin[10][10] = {{0,1,0,1,0,1,0,1,0,1},{1,0,1,0,1,0,1,0,1,0},{0,1,0,1,0,1,0,1,0,1},{1,0,1,0,5,0,0,0,1,0},{0,0,0,0,0,0,0,0,0,0},{5,0,0,0,0,0,0,0,0,0},{0,0,0,5,0,0,0,5,0,5},{5,0,5,0,0,0,5,0,5,0},{0,5,0,5,0,5,0,5,0,5},{5,0,5,0,5,0,5,0,5,0}}; //Etat final du plateau attendu
+	/* Crée le plateau de départ puis modifie uniquement les pièces qui ont changé pour obtenir le plateau final */
+	int ** pos_fin = make_empty_board(10,10);
+	int i0;
+	int j0;
+	for(i0=0; i0<10;i0++){
+		for(j0=0; j0<4;j0++){
+			if ((i0+j0)%2==0)
+				pos_fin[i0][j0]=0;
+			else
+				pos_fin[i0][j0]=1;
+		}
+		for(j0=4;j0<6;j0++){
+			pos_fin[i0][j0]=0;
+		}
+		for(j0=6;j0<10;j0++){
+			if ((i0+j0)%2==0)
+				pos_fin[i0][j0]=0;
+			else
+				pos_fin[i0][j0]=5;
+		}
+	}
+	pos_fin[3][4] = 5;
+	pos_fin[3][6] = 0;
+	pos_fin[5][0] = 5;
+	pos_fin[6][1] = 0;
+	pos_fin[6][5] = 0;
+	pos_fin[7][4] = 0;
 	
+	/* Vérifie que le plateau final correspond bien à celui attendu */
 	int i;
 	int j;
 	for(i=0; i<10; i++){
@@ -273,10 +339,29 @@ void test_apply_moves(void)
 	9|0 0 0 0 0 0 0 0 0 0		9|3 0 3 0 0 0 5 0 0 0	7 = dame blanche
 
 	*/
-	int gameboard1[10][10] = {{0,0,0,0,0,0,0,0,0,0},{5,0,7,0,0,0,0,0,5,0},{0,0,0,0,0,0,0,0,0,1},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,5,0},{0,1,0,3,0,0,0,1,0,0},{0,0,0,0,0,0,0,0,0,0}};
+	
+	int ** gameboard1 = make_empty_board(10,10);
+	int ig1;
+	int jg1;
+	for(ig1 = 0; ig1 < 10; ig1++){
+		for(jg1 = 0; jg1 < 10; jg1++){
+			if((ig1 == 1 && (jg1 == 0 || jg1 == 8)) || (ig1 == 7 && jg1 == 8))
+				gameboard1[ig1][jg1] = 5;
+			else if((ig1 == 2 && jg1 == 9) || (ig1 == 8 && (jg1 == 1 || jg1 == 7)))
+				gameboard1[ig1][jg1] = 1;
+			else if(ig1 == 1 && jg1 == 2)
+				gameboard1[ig1][jg1] = 7;
+			else if(ig1 == 8 && jg1 == 3)
+				gameboard1[ig1][jg1] = 3;
+			else
+				gameboard1[ig1][jg1] = 0;
+		}
+	}
 	
 	struct game *game3;	
-	game3 = load_game(10, 10, &gameboard1, 1);
+	game3 = load_game(10, 10,(const int **) gameboard1, 1);
+	
+	free(gameboard1);
 	
 	struct move_seq *ptrseq_pb1 = (struct move_seq *) malloc(sizeof(struct move_seq));
 	if(ptrseq_pb1 == NULL)
@@ -400,12 +485,26 @@ void test_apply_moves(void)
 	ptrmove_pb1 -> seq = NULL;
 	free(ptrmove_pb1);
 	
+	free_game(game3);
+	
 	/* Vérifie qu'un mouvement non-valide est signalé */
 	
-	int gameboard2[10][10] = {{1,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0}};
+	int ** gameboard2 = make_empty_board(10,10);
+	int ig2;
+	int jg2;
+	for(ig2 = 0; ig2 < 10; ig2++){
+		for(jg2 = 0; jg2 < 10; jg2++){
+			if(ig2 == 0 && jg2 == 0)
+				gameboard2[ig2][jg2] = 1;
+			else
+				gameboard2[ig2][jg2] = 0;
+		}
+	}
 	
 	struct game *game4;
-	game4 = load_game(10, 10, &(&gameboard2), 0);
+	game4 = load_game(10, 10,(const int **) gameboard2, 0);
+	
+	free(gameboard2);
 	
 	struct move_seq *ptrseq_err = (struct move_seq *) malloc(sizeof(struct move_seq));
 	if (ptrseq_err == NULL)
@@ -433,6 +532,8 @@ void test_apply_moves(void)
 	ptrmove_err -> seq = NULL;
 	free(ptrmove_err);
 	
+	free_game(game4);
+	
 	/* Vérifie qu'un jeu terminé est bien signalé 
 	
 	  0_1_2_3_4_5_6_7_8_9		  0_1_2_3_4_5_6_7_8_9
@@ -444,15 +545,29 @@ void test_apply_moves(void)
 	5|0 0 0 0 0 0 0 0 0 0		5|0 0 0 0 0 0 0 0 0 0	
 	6|0 0 0 0 0 0 0 0 0 0		6|0 0 0 0 0 0 0 0 0 0	1 = pion noir
 	7|0 0 0 0 0 0 0 0 0 0		7|0 0 0 0 0 0 0 0 0 0	3 = dame noir
-	8|0 0 0 O 0 0 0 0 0 0		8|0 0 0 0 0 0 0 0 0 0	5 = pion blanc
+	8|0 0 0 0 0 0 0 0 0 0		8|0 0 0 0 0 0 0 0 0 0	5 = pion blanc
 	9|0 0 0 0 0 0 0 0 0 0		9|0 0 0 0 0 0 0 0 0 0	7 = dame blanche
 	
 	*/
 	
-	int gameboard3[10][10] = {{1,0,0,0,0,0,0,0,0,0},{0,5,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0}};
+	int ** gameboard3 = make_empty_board(10,10);
+	int ig3;
+	int jg3;
+	for(ig3 = 0; ig3 < 10; ig3++){
+		for(jg3 = 0; jg3 < 10; jg3++){
+			if(ig3 == 0 && jg3 == 0)
+				gameboard3[ig3][jg3] = 1;
+			else if(ig3 == 1 && jg3 == 1)
+				gameboard3[ig3][jg3] = 5;
+			else
+				gameboard3[ig3][jg3] = 0;
+		}
+	}
 	
 	struct game *game5;
-	game5 = load_game(10, 10, &(&gameboard3), 0);
+	game5 = load_game(10, 10, (const int **) gameboard3, 0);
+	
+	free(gameboard3);
 	
 	struct move_seq *ptrseq_end = (struct move_seq *) malloc(sizeof(struct move_seq));
 	if (ptrseq_err == NULL)
@@ -479,6 +594,8 @@ void test_apply_moves(void)
 	free(ptrseq_end);
 	ptrmove_end -> seq = NULL;
 	free(ptrmove_end);
+
+	free_game(game5);
 	
 }
 
@@ -488,10 +605,26 @@ void test_apply_moves(void)
 void test_is_move_seq_valid(void)
 {
 	
-	int gameboardvalid[10][10] = {{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,1,0,0,0,0,0,0},{0,0,5,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,7,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0}};
+	int ** gameboardvalid = make_empty_board(10,10);
+	int igv;
+	int jgv;
+	for(igv = 0; igv < 10; igv++){
+		for(jgv = 0; jgv < 10; jgv++){
+			if(igv == 2 && jgv == 3)
+				gameboardvalid[igv][jgv] = 1;
+			else if(igv == 3 && jgv == 2)
+				gameboardvalid[igv][jgv] = 5;
+			else if(igv == 6 && jgv == 7)
+				gameboardvalid[igv][jgv] = 7;
+			else
+				gameboardvalid[igv][jgv] = 0;
+		}
+	}
 	
 	struct game *gameval;
-	gameval = load_game(10, 10, &(&gameboardvalid), 1);
+	gameval = load_game(10, 10, (const int **) gameboardvalid, 1);
+	
+	free(gameboardvalid);
 	
 	struct move_seq *seq_casedevant = (struct move_seq *) malloc(sizeof(struct move_seq)); //Un pion doit se déplacer en diagonale
 	if (seq_casedevant == NULL)
@@ -554,7 +687,7 @@ void test_is_move_seq_valid(void)
 	(*seq_plusieurspions).c_new = valid;
 	seq_plusieurspions -> next = NULL;
 	
-	struct coord *coordcapture;
+	struct coord *coordcapture = NULL;
 	int nonvalid1 = is_move_seq_valid(gameval, seq_casedevant, NULL, coordcapture);
 	int nonvalid2 = is_move_seq_valid(gameval, seq_casederriere, NULL, coordcapture);
 	int nonvalid3 = is_move_seq_valid(gameval, seq_casevide, NULL, coordcapture);
@@ -582,6 +715,8 @@ void test_is_move_seq_valid(void)
 	free(seq_caseoccupee);
 	free(seq_plusieurspions);
 	
+	free_game(gameval);
+	
 }
 
 /*
@@ -593,6 +728,8 @@ void test_undo_moves(void)
 	undo_moves(game1, 7);
 	
 	verifdep(game1);
+	
+	free_game(game1);
 	
 }
 
@@ -625,10 +762,6 @@ void verifdep(struct game *gamev)
 	} 
 }
 
-
-
-
-
 /*
  * make_empty_board
  * crée un damier vide (sans pions)
@@ -647,4 +780,16 @@ int ** make_empty_board(int xsize, int ysize){
 			return NULL;
 	}
 	return board;
+}
+
+void free_board(int **board)
+{
+
+	int i;
+	for(i = 0; i < 10; i++)
+	{
+		free(board[i]);
+		board[i]=NULL;
+	}
+	free(board);
 }
