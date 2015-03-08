@@ -62,7 +62,6 @@ int main (int argc, char * argv[]){
 				printf("entrez un mouvement autorisé\n");
 			}
 			if(am==0){
-				printf("______________________________________________________________\n");
 				print_board(game);
 				if(game->cur_player==PLAYER_WHITE)
 					printf("\naux blancs de jouer\n");
@@ -70,7 +69,6 @@ int main (int argc, char * argv[]){
 					printf("\naux noirs de jouer\n");
 			}
 			if(am==1){
-				printf("______________________________________________________________\n");
 				print_board(game);
 				printf("\nfélécitations, vous avez gagné!\n");
 			}
@@ -79,7 +77,9 @@ int main (int argc, char * argv[]){
 			printf("entrez le nombre de mouvements à defaire\n2");
 			scanf("%i", undo);
 			undo_moves(game, *undo);
+			print_board(game);
 		}
+		printf("______________________________________________________________\n");
 	}
 	free_game(game);
 	game=NULL;
