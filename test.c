@@ -7,14 +7,19 @@
 #include <stdlib.h>
 #include "dames.h"
 
-int init_suite1(void);
-int clean_suite1(void);
+#define MY_CU_ASSERT(value, args...) do { \
+    int __b__ = (value); \
+    if(! __b__) printf(args); \
+    CU_ASSERT(__b__); \
+} while(0)
+
 void verifdep(struct game *);
 void test_new_game(void);
 void test_load_game(void);
 void test_apply_moves(void);
 void test_is_move_seq_valid(void);
 void test_undo_moves(void);
+void free_board2(int **);
 
 int ** make_empty_board(int xsize, int ysize); // AJOUT DE BRUNO, pour faire des int ** board :)
 
@@ -35,12 +40,12 @@ int main()
 		return CU_get_error();
 
 	/* Ajoute la suite au catalogue */
-	pSuite = CU_add_suite("Suite_1", NULL, NULL);//init_suite1, clean_suite1);
+	pSuite = CU_add_suite("Suite_1", NULL, NULL);
 	if (NULL == pSuite) {
 		CU_cleanup_registry();
 		return CU_get_error();
 	}
-
+	
 	/* Ajoute les tests à la suite */
 	if ((NULL == CU_add_test(pSuite, "test new_game()", test_new_game)) ||
 		 (NULL == CU_add_test(pSuite, "test load_game()", test_load_game)) ||
@@ -60,26 +65,6 @@ int main()
 	CU_cleanup_registry();
 	return CU_get_error();
 }
-/*
- *
- * Initialise les données nécessaires à l'exécution des tests
- *
-int init_suite1(void)
-{
-
-	
-}
-
- *
- * Libère les données utilisées dans l'exécution des tests
- *
-int clean_suite1(void)
-{
-	
-	//LIBERER MEMOIRE MOVES
-	
-}
-*/
 
 /*
  * Cette fonction crée une partie et vérifie que le plateau a les bonnes dimensions, que le joueur qui commence à jouer 
@@ -90,12 +75,12 @@ void test_new_game(void)
 	
 	game1 = new_game(10,10); //Initialise la partie 
 	
-	CU_ASSERT_EQUAL((*game1).xsize, 10); //Vérifie que le plateau a les bonnes dimensions
-	CU_ASSERT_EQUAL((*game1).ysize, 10);
+	MY_CU_ASSERT((*game1).xsize == 10, "Le plateau créé avec la fonction new_game() n'a pas une longueur de 10\n"); // CU_ASSERT_EQUAL((*game1).xsize, 10); //Vérifie que le plateau a les bonnes dimensions
+	MY_CU_ASSERT((*game1).ysize == 10, "Le plateau créé avec la fonction new_game() n'a pas une hauteur de 10\n"); // CU_ASSERT_EQUAL((*game1).ysize, 10);
 	
-	CU_ASSERT_EQUAL((*game1).cur_player, 1); //Vérifie que le joueur blanc commence bien la partie
+	MY_CU_ASSERT((*game1).cur_player == 1, "Ce n'est pas le joueur blanc qui commence la partie\n"); // CU_ASSERT_EQUAL((*game1).cur_player, 1); //Vérifie que le joueur blanc commence bien la partie
 	
-	CU_ASSERT_EQUAL((game1 -> moves), NULL); //Vérifie que la liste des mouvements exécutés est bien vide
+	MY_CU_ASSERT((game1 -> moves) == NULL, "La liste des mouvements exécutés n'est pas vide\n"); // CU_ASSERT_EQUAL((game1 -> moves), NULL); //Vérifie que la liste des mouvements exécutés est bien vide
 	
 	verifdep(game1);
 	
@@ -133,14 +118,14 @@ void test_load_game(void)
 	struct game *game2;
 	game2 = load_game(10, 10,(const int **) gameboard, 0);//Charge une partie
 	
-	CU_ASSERT_EQUAL((*game2).xsize, 10); //Vérifie que le plateau a les bonnes dimensions
-	CU_ASSERT_EQUAL((*game2).ysize, 10);
+	MY_CU_ASSERT((*game2).xsize == 10, "Le plateau chargé avec la fonction load_game() n'a pas la bonne longueur\n"); // CU_ASSERT_EQUAL((*game2).xsize, 10); //Vérifie que le plateau a les bonnes dimensions
+	MY_CU_ASSERT((*game2).ysize == 10, "Le plateau chargé avec la fonction load_game() n'a pas la bonne hauteur\n"); // CU_ASSERT_EQUAL((*game2).ysize, 10);
 	
-	CU_ASSERT_EQUAL((*game2).cur_player, 0); //Vérifie que c'est bien au tour du joueur noir de jouer
+	MY_CU_ASSERT((*game2).cur_player == 0, "La partie chargée avec load_game() ne reprend pas avec le bon joueur\n"); // CU_ASSERT_EQUAL((*game2).cur_player, 0); //Vérifie que c'est bien au tour du joueur noir de jouer
 	
 	verifdep(game2);//Vérifie que le jeu se joue bien sur le plateau chargé
 	
-	free(gameboard);
+	free_board2(gameboard);
 	free_game(game2);
 	
 }
@@ -289,13 +274,16 @@ void test_apply_moves(void)
 	/* Vérifie que le plateau final correspond bien à celui attendu */
 	int i;
 	int j;
+	int boo = 1;
 	for(i=0; i<10; i++){
 		for(j=0; j<10; j++){
-			
-			CU_ASSERT_EQUAL((*game1).board[i][j], pos_fin[i][j]);
-				
+		 	if ((*game1).board[i][j] != pos_fin[i][j]){
+		 		boo = 0;
+			 }
 		}
 	}
+
+	MY_CU_ASSERT(boo, "La fonction apply_moves() n'applique pas la suite de mouvements testée\n"); 
 	
 	free(ptrseq7);
 	ptrseq6 -> next = NULL;
@@ -328,14 +316,14 @@ void test_apply_moves(void)
 
 	  0_1_2_3_4_5_6_7_8_9		  0_1_2_3_4_5_6_7_8_9
 	0|0 0 0 0 0 0 0 0 0 0		0|0 7 0 7 0 0 0 1 0 0
-	1|5 0 7 0 0 0 0 0 5 0		1|0 0 0 0 0 0 0 0 5 0
+	1|5 0 7 0 0 0 0 0 5 0		1|0 0 0 0 0 0 0 0 0 0
 	2|0 0 0 0 0 0 0 0 0 1		2|0 0 0 0 0 0 0 0 0 0
 	3|0 0 0 0 0 0 0 0 0 0		3|0 0 0 0 0 0 0 0 0 0
 	4|0 0 0 0 0 0 0 0 0 0  =>	4|0 0 0 0 0 0 0 0 0 0	
 	5|0 0 0 0 0 0 0 0 0 0		5|0 0 0 0 0 0 0 0 0 0	
 	6|0 0 0 0 0 0 0 0 0 0		6|0 0 0 0 0 0 0 0 0 0	1 = pion noir
 	7|0 0 0 0 0 0 0 0 5 0		7|0 0 0 0 0 0 0 0 0 0	3 = dame noir
-	8|0 1 0 3 0 0 0 1 0 0		8|0 0 0 0 0 0 0 1 0 0	5 = pion blanc
+	8|0 1 0 3 0 0 0 1 0 0		8|0 0 0 0 0 0 0 0 0 0	5 = pion blanc
 	9|0 0 0 0 0 0 0 0 0 0		9|3 0 3 0 0 0 5 0 0 0	7 = dame blanche
 
 	*/
@@ -360,8 +348,7 @@ void test_apply_moves(void)
 	
 	struct game *game3;	
 	game3 = load_game(10, 10,(const int **) gameboard1, 1);
-	
-	free(gameboard1);
+	free_board2(gameboard1);
 	
 	struct move_seq *ptrseq_pb1 = (struct move_seq *) malloc(sizeof(struct move_seq));
 	if(ptrseq_pb1 == NULL)
@@ -449,17 +436,34 @@ void test_apply_moves(void)
 	
 	apply_moves(game3, ptrmove_pb1);
 	
-	int gameboard1_final[10][10] = {{0,7,0,7,0,0,0,1,0,0},{0,0,0,0,0,0,0,0,5,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,1,0,0},{3,0,3,0,0,0,5,0,0,0}};
+	//int gameboard1_final[10][10] = {{0,7,0,7,0,0,0,1,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},{3,0,3,0,0,0,5,0,0,0}};
+	
+	
+	MY_CU_ASSERT((*game3).board[0][1] == 7, "Le pion blanc n'est pas transformé en dame en arrivant sur la dernière ligne adverse\n"); 
+	(*game3).board[0][1] = 0; 
+	MY_CU_ASSERT((*game3).board[0][3] == 7, "Il y a un problème lorsque la dame blanche arrive sur la dernière ligne adverse\n"); 
+	(*game3).board[0][3] = 0; 
+	MY_CU_ASSERT((*game3).board[0][7] == 1, "Un pion blanc qui arrive sur la ligne de son propre côté ne doit pas être transformé en dame\n");
+	(*game3).board[0][7] = 0; 
+	MY_CU_ASSERT((*game3).board[9][0] == 3, "Le pion noir n'est pas transformé en dame en arrivant sur la dernière ligne adverse\n");
+	(*game3).board[9][0] = 0; 
+	MY_CU_ASSERT((*game3).board[9][2] == 3, "Il y a un problème lorsque la dame noire arrive sur la dernière ligne adverse\n");  
+	(*game3).board[9][2] = 0; 
+	MY_CU_ASSERT((*game3).board[9][6] == 5, "Un pion noir qui arrive sur la dernière ligne de son propre côté ne doit pas être transformé en dame\n"); 
+	(*game3).board[9][6] = 0; 
 	
 	int i2;
 	int j2;
-	for(i2 = 0; i2 < 10; i2++){
-		for(j2 = 0; j2 < 10; j2++){
-			
-			CU_ASSERT_EQUAL((*game3).board[i2][j2], gameboard1_final[i2][j2]);
-			
-		}	
+	int boo2 = 1;
+	for(i2=0; i2<10; i2++){
+		for(j2=0; j2<10; j2++){
+			if((*game3).board[i2][j2]!=0){
+				boo2 = 0;
+			}
+		}
 	}
+	
+	MY_CU_ASSERT(boo2 == 1, "Une des cases dans le test des pions qui se transforment en dames n'a pas la bonne valeur finale\n");
 	
 	free(ptrseq_pn2);
 	ptrmove_pn2 -> seq = NULL;
@@ -504,7 +508,7 @@ void test_apply_moves(void)
 	struct game *game4;
 	game4 = load_game(10, 10,(const int **) gameboard2, 0);
 	
-	free(gameboard2);
+	free_board2(gameboard2);
 	
 	struct move_seq *ptrseq_err = (struct move_seq *) malloc(sizeof(struct move_seq));
 	if (ptrseq_err == NULL)
@@ -526,7 +530,7 @@ void test_apply_moves(void)
 	
 	int resultat_err = apply_moves(game4, ptrmove_err);
 	
-	CU_ASSERT_EQUAL(resultat_err, -1); //Un mouvement non-valide doit être signalé par '-1'
+	MY_CU_ASSERT(resultat_err == -1, "Un mouvement non valide n'est pas signalé\n"); //CU_ASSERT_EQUAL(resultat_err, -1); //Un mouvement non-valide doit être signalé par '-1'
 	
 	free(ptrseq_err);
 	ptrmove_err -> seq = NULL;
@@ -567,7 +571,7 @@ void test_apply_moves(void)
 	struct game *game5;
 	game5 = load_game(10, 10, (const int **) gameboard3, 0);
 	
-	free(gameboard3);
+	free_board2(gameboard3);
 	
 	struct move_seq *ptrseq_end = (struct move_seq *) malloc(sizeof(struct move_seq));
 	if (ptrseq_err == NULL)
@@ -589,7 +593,7 @@ void test_apply_moves(void)
 	
 	int resultat_end = apply_moves(game5, ptrmove_end);
 	
-	CU_ASSERT_EQUAL(resultat_end,1); //Vérifie que la partie est finie
+	MY_CU_ASSERT(resultat_end == 1,"Une partie finie n'est pas signalée\n"); //CU_ASSERT_EQUAL(resultat_end,1); //Vérifie que la partie est finie
 	
 	free(ptrseq_end);
 	ptrmove_end -> seq = NULL;
@@ -604,7 +608,7 @@ void test_apply_moves(void)
  */
 void test_is_move_seq_valid(void)
 {
-	
+
 	int ** gameboardvalid = make_empty_board(10,10);
 	int igv;
 	int jgv;
@@ -624,7 +628,7 @@ void test_is_move_seq_valid(void)
 	struct game *gameval;
 	gameval = load_game(10, 10, (const int **) gameboardvalid, 1);
 	
-	free(gameboardvalid);
+	free_board2(gameboardvalid);
 	
 	struct move_seq *seq_casedevant = (struct move_seq *) malloc(sizeof(struct move_seq)); //Un pion doit se déplacer en diagonale
 	if (seq_casedevant == NULL)
@@ -696,15 +700,15 @@ void test_is_move_seq_valid(void)
 	int valid1 = is_move_seq_valid(gameval, seq_dame, NULL, coordcapture);
 	int nonvalid6 = is_move_seq_valid(gameval, seq_caseoccupee, NULL, coordcapture);
 	int nonvalid7 = is_move_seq_valid(gameval, seq_plusieurspions, seq_dame, coordcapture);
-	
-	CU_ASSERT_EQUAL(nonvalid1, 0);
-	CU_ASSERT_EQUAL(nonvalid2, 0);
-	CU_ASSERT_EQUAL(nonvalid3, 0);
-	CU_ASSERT_EQUAL(nonvalid4, 0);
-	CU_ASSERT_EQUAL(nonvalid5, 0);
-	CU_ASSERT_EQUAL(valid1, 2);
-	CU_ASSERT_EQUAL(nonvalid6, 0);
-	CU_ASSERT_EQUAL(nonvalid7, 0);
+
+	MY_CU_ASSERT(nonvalid1 == 0,"Un pion qui se déplace sur la case devant lui est considéré comme valide\n");//CU_ASSERT_EQUAL(nonvalid1, 0);
+	MY_CU_ASSERT(nonvalid2 == 0,"Un pion ne peut pas se déplacer en arrière\n");//	CU_ASSERT_EQUAL(nonvalid2, 0);
+	MY_CU_ASSERT(nonvalid3 == 0,"Déplacer une case vide n'est pas considérée comme invalide\n");//	CU_ASSERT_EQUAL(nonvalid3, 0);
+	MY_CU_ASSERT(nonvalid4 == 0,"Un pion ne peut pas sauter (comme pour prendre un pion) une case vide\n");//	CU_ASSERT_EQUAL(nonvalid4, 0);
+	MY_CU_ASSERT(nonvalid5 == 0,"Le mouvement déplace un pion alors que c'est à l'autre joueur de jouer\n");//	CU_ASSERT_EQUAL(nonvalid5, 0);
+	MY_CU_ASSERT(valid1 == 2,"La dame doit ouvoir se déplacer sur n'importe quelle case non-occupée de la diagonale\n");//	CU_ASSERT_EQUAL(valid1, 2);
+	MY_CU_ASSERT(nonvalid6 == 0,"Un pion ne peut pas terminer un mouvement sur une case occupée\n");//	CU_ASSERT_EQUAL(nonvalid6, 0);
+	MY_CU_ASSERT(nonvalid7 == 0,"Un seul mouvement ne peut pas déplacer plusieurs pions différents\n");//	CU_ASSERT_EQUAL(nonvalid7, 0);
 	
 	free(seq_casedevant);
 	free(seq_casederriere);
@@ -759,7 +763,7 @@ void verifdep(struct game *gamev)
 			}
 			
 		}
-	} 
+	}
 }
 
 /*
@@ -768,7 +772,7 @@ void verifdep(struct game *gamev)
  *
  * @xsize: taille des abscisses du plateau
  * @ysize: taille des ordonnees du plateau
- */
+ *
 int ** make_empty_board(int xsize, int ysize){
 	int ** board = (int **) malloc((size_t)xsize*sizeof(int *));
 	if (board==NULL)
@@ -781,8 +785,8 @@ int ** make_empty_board(int xsize, int ysize){
 	}
 	return board;
 }
-
-void free_board(int **board)
+*/
+void free_board2(int **board)
 {
 
 	int i;
