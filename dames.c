@@ -203,7 +203,7 @@ extern int is_move_seq_valid(const struct game *game, const struct move_seq *seq
 				return 0;
 			if(color(mval)==color(piecedep)) // si la piece intermediare est de meme couleur que la piece bougee
 				return 0;
-			if(color(mval)==-2*color(piecedep)+1){ // si la piece intermediaire est de la couleur adverse 
+			if(color(mval)==1-color(piecedep)){ // si la piece intermediaire est de la couleur adverse 
 				taken->x=xold+deltax/2;
 				taken->y=yold+deltay/2;
 				return 2;		
@@ -459,7 +459,7 @@ int apply_move_seq(struct game * game, struct move_seq * appseq, struct move_seq
 		if(c_new.y==0&&game->cur_player==PLAYER_WHITE) // si une piece blanche est arrivee a l'autre bout du damier
 			board[c_new.x][c_new.y]=dblanc;
 		else{	
-			if(c_new.y==10&&game->cur_player==PLAYER_BLACK) // si une piece noire est arrivee a l'autre bout du damier
+			if(c_new.y==9&&game->cur_player==PLAYER_BLACK) // si une piece noire est arrivee a l'autre bout du damier
 				board[c_new.x][c_new.y]=dnoir;
 			else // si non
 				board[c_new.x][c_new.y]=board[c_old.x][c_old.y]; // la nouvelle case contient la piece deplacee
