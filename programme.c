@@ -77,4 +77,5 @@ int main (int argc, char * argv[]){
 	game=NULL;
 
 	printf("partie quittée\n");
+	printf("______________________________________________________________\n");
 }
