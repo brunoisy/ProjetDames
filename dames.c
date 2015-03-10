@@ -183,7 +183,7 @@ extern int is_move_seq_valid(const struct game *game, const struct move_seq *seq
 				if(color(cval)==1-color(piecedep)){ // si cet element est de couleur opposee
 					takex=xold+i*deltax/abs(deltax);
 					takey=yold+i*deltay/abs(deltax);
-					pionspris=1;
+					pionspris++;
 				}			
 			}
 		}
