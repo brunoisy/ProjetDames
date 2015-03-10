@@ -7,7 +7,7 @@ int main (int argc, char * argv[]){
 	struct game * game=new_game(10,10);
 	if(game==NULL)
 		return EXIT_FAILURE;
-	printf("\n");
+	printf("\n 1: pion noir, 5: pion blanc, 3: dame noire, 7: dame blanche\n\n");
 	print_board(game);
 	printf("\naux blancs de jouer\n");
 	int choice, choice2, xin, yin, xfin, yfin, undo, am;

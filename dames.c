@@ -121,7 +121,7 @@ extern int is_move_seq_valid(const struct game *game, const struct move_seq *seq
 	const int ynew=(seq->c_new).y;
 	int rafle=0; // vaudra 0 si prev==NULL et 1 si non
 
-	if(xold<0 || xold>game->xsize-1 || yold<0 || yold>game->ysize-1) // si la case de depart est hors jeu
+	if(xold<0 || xold>game->xsize-1 || yold<0 || yold>game->ysize-1) // si la case de depart est hors-jeu
 		return 0;
 	if(xnew<0 || xnew>game->xsize-1 || ynew<0 || ynew>game->ysize-1) // si la case d'arrivee est hors-jeu
 		return 0;
@@ -183,7 +183,7 @@ extern int is_move_seq_valid(const struct game *game, const struct move_seq *seq
 				if(color(cval)==1-color(piecedep)){ // si cet element est de couleur opposee
 					takex=xold+i*deltax/abs(deltax);
 					takey=yold+i*deltay/abs(deltax);
-					pionspris++;
+					pionspris=1;
 				}			
 			}
 		}
