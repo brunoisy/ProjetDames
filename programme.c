@@ -29,8 +29,14 @@ int main (int argc, char * argv[]){
 			moves->seq=seq;
 			choice2=1;
 			while(choice2==1){
-				printf("entrez Xinitial Yinitial Xfinal Yfinal\n");
-				scanf("%i %i %i %i", &xin, &yin, &xfin, &yfin);
+				printf("entrez Xinitial\n");
+				scanf("%i", &xin);
+				printf("entrez Yinitial\n");
+				scanf("%i", &yin);
+				printf("entrez Xfinal\n");
+				scanf("%i", &xfin);
+				printf("entrez Yfinal\n");
+				scanf("%i", &yfin);	
 				(seq->c_old).x=xin;
 				(seq->c_old).y=yin;
 				(seq->c_new).x=xfin;
@@ -68,8 +74,13 @@ int main (int argc, char * argv[]){
 		if(choice==2){
 			printf("entrez le nombre de mouvements à defaire\n");
 			scanf("%i", &undo);
-			undo_moves(game, undo);
+			if(undo_moves(game, undo)==-1)
+				printf("erreur dans l'annulation de mouvements, redémarrez la partie\n");
 			print_board(game);
+			if(game->cur_player==PLAYER_WHITE)
+				printf("\naux blancs de jouer\n");
+			if(game->cur_player==PLAYER_BLACK)
+				printf("\naux noirs de jouer\n");
 		}
 		printf("______________________________________________________________\n");
 	}

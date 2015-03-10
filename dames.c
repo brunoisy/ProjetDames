@@ -15,6 +15,7 @@ void add_move_to_game(struct game * game, const struct move * addmove);
 int apply_move_seq(struct game * game, struct move_seq * appseq, struct move_seq * prev);
 int is_wining(struct game * game, int cur_player);
 int undo_move_seq(struct game *game);
+struct move_seq * reverse_seq(struct move_seq * list);
 
 
 const int cvide   =0;
@@ -25,6 +26,7 @@ const int dblanc  =7;
 
 /*
 int main (int argc, char * argv[]){
+
 	struct game * ng=new_game(10,10);
 
 	struct move * moves=(struct move *)malloc(sizeof(struct move));
@@ -70,8 +72,33 @@ int main (int argc, char * argv[]){
 	free_moves(moves);
 	free_moves(moves2);
 	free_game(ng);
+
+	struct move_seq * seq= (struct move_seq *)malloc(sizeof(struct move_seq));
+	struct move_seq * seq2=(struct move_seq *)malloc(sizeof(struct move_seq));
+	struct coord c_old;
+	struct coord c_new;
+	struct coord c_old2;
+	struct coord c_new2;
+	c_old.x=1;
+	c_old.y=6;
+	c_new.x=0;
+	c_new.y=5;
+	seq->c_old=c_old;
+	seq->c_new=c_new;
+	seq->next=seq2;
+	c_old2.x=0;
+	c_old2.y=3;
+	c_new2.x=1;
+	c_new2.y=4;
+	seq2->c_old=c_old2;
+	seq2->c_new=c_new2;
+	struct move_seq * resultinv=reverse_seq(seq);
+	printf("(resultinv->c_old).x=%i\n",(resultinv->c_old).x);
+	printf("((resultinv->next)->c_old).x=%i\n",((resultinv->next)->c_old).x);
+	printf("(resultinv->next)->next=%p\n",(resultinv->next)->next);
 }
 */
+
 
 extern struct game *new_game(int xsize, int ysize){
 	struct game * newG=(struct game *) malloc(sizeof(struct game));
@@ -173,8 +200,10 @@ extern int is_move_seq_valid(const struct game *game, const struct move_seq *seq
 
 	if(piecedep==cvide) // s'il faut deplacer une case vide
 		return 0;
-	if(color(piecedep)!=game->cur_player) // si la piece a deplacer n'est pas de la couleur du joueur actuel
+	if(color(piecedep)!=game->cur_player){ // si la piece a deplacer n'est pas de la couleur du joueur actuel
+printf("colornotvalid\n");
 		return 0;
+}
 	if(piecearr!=cvide)// si on arrive sur une case occupee
 		return 0;
 
@@ -247,7 +276,7 @@ extern int is_move_seq_valid(const struct game *game, const struct move_seq *seq
 			return 0;
 	}
 	printf("aucune condition n'a ete validee. \n");
-	return EXIT_FAILURE;
+	return 0;
 }
 
 
@@ -375,6 +404,7 @@ struct move_seq* copy_move_seq(const struct move_seq* seq){
 /*
  * add_move_to_game
  * rajoute le premier mouvement de addmove (le dernier mouvement joue) a (!!!) l'avant (!!!) de la chaine de moves de la partie
+ * les sequences du mouvement sont elles aussi inversées (la derniere sequence jouee se trouve a l'avant de la liste)
  *
  * @game: pointeur vers la structure game
  * @addmove: pointeur vers la structure move dont on veut rajouter le premier element a game->moves
@@ -383,9 +413,33 @@ void add_move_to_game(struct game * game, const struct move * addmove){
 	struct move * newmove=(struct move *)malloc(sizeof(struct move));
 	if (newmove==NULL)
 		return;
-	newmove->seq=copy_move_seq(addmove->seq);
+	newmove->seq=reverse_seq(copy_move_seq(addmove->seq));
 	newmove->next=game->moves;
 	game->moves=newmove;
+}
+
+
+/*
+ * reverse
+ * inverse une liste chainee, renvoie un pointeur vers le début de la liste inversée
+ *
+ * @list: pointeur vers la liste chainee
+ */
+struct move_seq * reverse_seq(struct move_seq * list){
+	if(list!=NULL&&list->next!=NULL){
+		struct move_seq * newnode=list;
+		struct move_seq * nextnode=list->next;
+		struct move_seq * nextnextnode=newnode;
+    		newnode->next=NULL;
+    		while(nextnextnode != NULL){
+        		nextnextnode=nextnode->next;
+        		nextnode->next=newnode;
+			newnode=nextnode;
+       			nextnode=nextnextnode;
+   		}
+   		return newnode;
+	}
+	return list;
 }
 
 
@@ -583,6 +637,8 @@ int undo_move_seq(struct game *game){
 		c_old=seq->c_old;
 		c_new=seq->c_new;
 		piece_taken=seq->piece_taken;
+		if(board[c_old.x][c_old.y]!=cvide) // si la position initiale de la piece n'est pas vide
+			return -1;
 		board[c_old.x][c_old.y]=seq->old_orig; // la piece ayant bouge retrouve sa place
 		board[c_new.x][c_new.y]=cvide; // l'endroit ou elle etait arrivee redevient une case vide
 		if(seq->piece_value!=0)
