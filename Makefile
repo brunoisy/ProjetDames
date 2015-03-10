@@ -1,4 +1,4 @@
-all: programme test
+all: jeu test
 
 jeu: programme.c
 	gcc -o programme programme.c dames.c
