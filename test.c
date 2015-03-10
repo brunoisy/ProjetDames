@@ -714,7 +714,7 @@ void test_is_move_seq_valid(void)
 	(*seq_plusieurspions).c_new = valid;
 	seq_plusieurspions -> next = NULL;
 	
-	struct coord *coordcapture;
+	struct coord *coordcapture = (struct coord *) malloc(sizeof(struct coord));;
 	
 	int nonvalid1 = is_move_seq_valid(gameval, seq_casedevant, NULL, coordcapture);
 	int nonvalid2 = is_move_seq_valid(gameval, seq_casederriere, NULL, coordcapture);
@@ -733,6 +733,8 @@ void test_is_move_seq_valid(void)
 	MY_CU_ASSERT(valid1 == 2,"La dame doit pouvoir se déplacer sur n'importe quelle case non-occupée de la diagonale\n");
 	MY_CU_ASSERT(nonvalid6 == 0,"Un pion ne peut pas terminer un mouvement sur une case occupée\n");
 	MY_CU_ASSERT(nonvalid7 == 0,"Un seul mouvement ne peut pas déplacer plusieurs pions différents\n");
+	
+	free(coordcapture);
 	
 	free(seq_casedevant);
 	free(seq_casederriere);
