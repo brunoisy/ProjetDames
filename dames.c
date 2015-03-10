@@ -95,10 +95,14 @@ extern int apply_moves(struct game *game, const struct move *moves){
 	struct move * movestoapply=copy_moves(moves);
 	struct move * tobefreed=movestoapply;
 	while(movestoapply!=NULL){ // tant que les mouvements ne sont pas termines
-		if (apply_move_seq(game, movestoapply->seq)==-1) // appliquer le mouvement, et s'il y a une sequence invalide
+		if (apply_move_seq(game, movestoapply->seq)==-1){ // appliquer le mouvement, et s'il y a une sequence invalide
+			free_moves(tobefreed);
 			return -1;
-		if(is_wining(game, game->cur_player)==1) // si le joueur a gagne la partie
+		}
+		if(is_wining(game, game->cur_player)==1){ // si le joueur a gagne la partie
+			free_moves(tobefreed);
 			return 1;
+		}
 		game->cur_player=change_player(game->cur_player); // on change de joueur
 		add_move_to_game(game, movestoapply); // on rajoute le mouvement effectue a la liste de moves dans game
 		movestoapply=movestoapply->next; 	
@@ -138,7 +142,7 @@ extern int is_move_seq_valid(const struct game *game, const struct move_seq *seq
 		rafle=1;
 	}
 	int updir=-2*color(piecedep)+1; // direction du haut en fonction de la couleur de la piece deplacee : -1 si blanc, 1 si noir.
-	int pvalue=(piecedep<<30)>>31; // valeur de la piece deplacee : 1 si dame, 0 si pion
+	int pvalue=(piecedep>>1)&1; // valeur de la piece deplacee : 1 si dame, 0 si pion
 	int deltax=xnew-xold;
 	int deltay=ynew-yold;
 	if(pvalue==0){ // si nous bougons un pion
