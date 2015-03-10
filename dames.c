@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "dames.h"
 
+
 int change_player(int cur_player);
 int ** make_empty_board(int xsize, int ysize);
 int ** copy_board(int xsize, const int ** board);
@@ -12,7 +13,7 @@ struct move* copy_moves(const struct move* moves);
 struct move_seq* copy_move_seq(const struct move_seq* seq);
 int color(int piece);
 void add_move_to_game(struct game * game, const struct move * addmove);
-int apply_move_seq(struct game * game, struct move_seq * appseq, struct move_seq * prev);
+int apply_move_seq(struct game * game, struct move_seq * appseq);
 int is_wining(struct game * game, int cur_player);
 int undo_move_seq(struct game *game);
 struct move_seq * reverse_seq(struct move_seq * list);
@@ -144,7 +145,7 @@ extern struct game *load_game(int xsize, int ysize, const int **board, int cur_p
 	struct game * newG=(struct game *) malloc(sizeof(struct game));
 	if (newG==NULL)
 		return NULL;
-	newG->board=copy_board(xsize, board); // car il est necessaire d'allouer un nouvel espace memoire a la variable newG->board
+	newG->board=copy_board(xsize, board); // car il est necessaire de copier newG->board dans un autre espace mémoire
 	newG->xsize=xsize;
 	newG->ysize=ysize;
 	newG->moves=NULL;
@@ -169,7 +170,7 @@ extern int apply_moves(struct game *game, const struct move *moves){
 	struct move * movestoapply=copy_moves(moves);
 	struct move * tobefreed=movestoapply;
 	while(movestoapply!=NULL){ // tant que les mouvements ne sont pas termines
-		if (apply_move_seq(game, movestoapply->seq, NULL)==-1) // appliquer le mouvement, et s'il y a une sequence invalide
+		if (apply_move_seq(game, movestoapply->seq)==-1) // appliquer le mouvement, et s'il y a une sequence invalide
 			return -1;
 		if(is_wining(game, game->cur_player)==1) // si le joueur a gagne la partie
 			return 1;
@@ -189,7 +190,7 @@ extern int is_move_seq_valid(const struct game *game, const struct move_seq *seq
 	const int yold=(seq->c_old).y;
 	const int xnew=(seq->c_new).x;
 	const int ynew=(seq->c_new).y;
-	int rafle=0;// vaudra 0 si prev==NULL et 1 si non
+	int rafle=0; // vaudra 0 si prev==NULL et 1 si non
 
 	if(xold<0 || xold>game->xsize-1 || yold<0 || yold>game->ysize-1) // si la case de depart est hors jeu
 		return 0;
@@ -200,33 +201,29 @@ extern int is_move_seq_valid(const struct game *game, const struct move_seq *seq
 
 	if(piecedep==cvide) // s'il faut deplacer une case vide
 		return 0;
-	if(color(piecedep)!=game->cur_player){ // si la piece a deplacer n'est pas de la couleur du joueur actuel
-printf("colornotvalid\n");
+	if(color(piecedep)!=game->cur_player) // si la piece a deplacer n'est pas de la couleur du joueur actuel
 		return 0;
-}
 	if(piecearr!=cvide)// si on arrive sur une case occupee
 		return 0;
-
 	if(prev!=NULL){ // si la sequence n'est pas la premiere d'un mouvement
 		const struct coord prev_c_new=prev->c_new;
 		const struct coord prev_c_old=prev->c_old;
 		if(prev_c_new.x != xold||prev_c_new.y != yold) // si la sequence ne fait pas partie d'une rafle
 			return 0;
-
 		rafle=1;
 	}
 	int updir=-2*color(piecedep)+1; // direction du haut en fonction de la couleur de la piece deplacee : -1 si blanc, 1 si noir.
 	int pvalue=(piecedep<<30)>>31; // valeur de la piece deplacee : 1 si dame, 0 si pion
 	int deltax=xnew-xold;
 	int deltay=ynew-yold;
-	if(pvalue==0){// si nous bougons un pion
+	if(pvalue==0){ // si nous bougons un pion
 		if(abs(deltax)==1&&deltay==updir){ // si deplacement d'une case (sans prise):
 			if(rafle==0) // si premier deplacement du mouvement
 				return 1;
 			else // sinon (car le pion doit prendre une piece s'il fait partie d'une rafle)
 				return 0;
 		}
-		if(abs(deltax)==2&&abs(deltay)==2){ // si deplacement de 2 cases (avec prise)
+		if(abs(deltax)==2&&abs(deltay)==2){ // si deplacement de 2 cases (avec prise obligatoire)
 			int mval=board[xold+deltax/2][yold+deltay/2]; // valeur de la case situee sur la diagonale de passage du pion
 			if(mval==cvide) // si la case intermediare est vide
 				return 0;
@@ -275,7 +272,7 @@ printf("colornotvalid\n");
 		else // si la reine a pris plus d'une piece ennemie
 			return 0;
 	}
-	printf("aucune condition n'a ete validee. \n");
+	printf("aucune condition n'a ete validee.\n");
 	return 0;
 }
 
@@ -291,7 +288,7 @@ extern int undo_moves(struct game *game, int n){
 		game->cur_player=change_player(game->cur_player); // on change de joueur
 		nextmoves=(game->moves)->next;
 		free_move_seq((game->moves)->seq);
-		free(game->moves);// on libere le coup qui a ete joue
+		free(game->moves); // on libere le mouvement qui a ete joue (seulement un mouvement)
 		game->moves=nextmoves;
 	}
 	return 0;
@@ -343,7 +340,7 @@ int change_player(int cur_player){
 
 /*
  * copy_moves
- * cree une liste chainee de mouvements identique a celle passee en argument, mais pointée par un autre pointeur
+ * renvoie une copie de la liste chainee de mouvements passée en argument, mais située dans une autre zone mémoire
  *
  * @moves: pointeur vers la structure moves a copier
  */
@@ -376,7 +373,7 @@ struct move* copy_moves(const struct move* moves){
 
 /*
  * copy_move_seq
- * cree une liste chainee de sequences identique a celle passee en argument, mais pointée par un autre pointeur
+ * renvoie une copie de la liste chainee de séquences passée en argument, mais située dans une autre zone mémoire
  *
  * @seq: pointeur vers la structure sequence a copier
  */
@@ -403,8 +400,10 @@ struct move_seq* copy_move_seq(const struct move_seq* seq){
 
 /*
  * add_move_to_game
- * rajoute le premier mouvement de addmove (le dernier mouvement joue) a (!!!) l'avant (!!!) de la chaine de moves de la partie
- * les sequences du mouvement sont elles aussi inversées (la derniere sequence jouee se trouve a l'avant de la liste)
+ * rajoute le premier mouvement de addmove (le dernier mouvement joué) à (!!!) la première place (!!!) de la chaine de moves de la    
+ * partie
+ * les sequences du mouvement sont elles aussi inversées (la dernier sequence jouee se trouve a l'avant de la liste contenue dans le
+ * mouvement)
  *
  * @game: pointeur vers la structure game
  * @addmove: pointeur vers la structure move dont on veut rajouter le premier element a game->moves
@@ -421,7 +420,7 @@ void add_move_to_game(struct game * game, const struct move * addmove){
 
 /*
  * reverse
- * inverse une liste chainee, renvoie un pointeur vers le début de la liste inversée
+ * inverse une liste chainée de move_seq, renvoie un pointeur vers le début de la liste inversée
  *
  * @list: pointeur vers la liste chainee
  */
@@ -466,7 +465,7 @@ int ** make_empty_board(int xsize, int ysize){
 
 /*
  * copy_board
- * cree un damier identique a celui passe en argument, mais pointé par un autre pointeur
+ * cree un damier identique a celui passe en argument, mais située dans une autre zone mémoire
  *
  * @board: tableau a copier
  */
@@ -491,9 +490,8 @@ int ** copy_board(int xsize, const int **board){
  *
  * @game: pointeur vers la structure de la partie
  * @appseq: pointeur vers la structure de la sequence du mouvement a appliquer
- * @prev: pointeur vers la séquence précédent immédiatement la séquence à vérifier, NULL s'il @seq est la première séquence du mouvement
  */
-int apply_move_seq(struct game * game, struct move_seq * appseq, struct move_seq * prev){
+int apply_move_seq(struct game * game, struct move_seq * appseq){
 	struct move_seq * seq=appseq; // car appseq doit rester pointer sur le debut de la sequence
 	int ** board=game->board;
 	struct coord * taken=(struct coord *)malloc(sizeof(struct coord*));
@@ -501,6 +499,7 @@ int apply_move_seq(struct game * game, struct move_seq * appseq, struct move_seq
 		return -1;
 	struct coord c_old;
 	struct coord c_new;
+	struct move_seq * prev=NULL;
 	while(seq!=NULL){ // tant que la sequence n'est pas terminee
 		if(is_move_seq_valid(game, seq, prev, taken)==0){ // si la sequence n'est pas valide
 			free(taken);
