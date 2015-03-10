@@ -1,7 +1,7 @@
 all: programme test
 
-programme: programme.c
+jeu: programme.c
 	gcc -o programme programme.c dames.c
 
 test:test.c
-	gcc -o test test.c dames.c -I$HOME/local/include -L$HOME/local/lib -lcunit
+	gcc -I$HOME/local/include test.c dames.c -L$HOME/local/lib -lcunit -o test
