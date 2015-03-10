@@ -26,9 +26,6 @@ int ** make_empty_board(int xsize, int ysize);
 struct game *game1;
 
 
-/*
- *
- */
 int main()
 {
 	
@@ -83,8 +80,6 @@ void test_new_game(void)
 	
 	verifdep(game1);//Vérifie que le plateau est initialisé correctement
 	
-	printf("Fin new_game\n");
-	
 }
 
 /*
@@ -128,8 +123,6 @@ void test_load_game(void)
 	verifdep(game2);//Vérifie que le jeu se joue bien sur le plateau chargé
 	
 	free_game(game2);
-	
-	printf("Fin load_game\n");
 	
 }
 
@@ -622,8 +615,6 @@ void test_apply_moves(void)
 
 	free_game(game5);
 	
-	printf("Fin apply_moves\n");
-	
 }
 
 /*
@@ -639,9 +630,9 @@ void test_is_move_seq_valid(void)
 		for(jgv = 0; jgv < 10; jgv++){
 			if(igv == 2 && jgv == 3)
 				gameboardvalid[igv][jgv] = 5;
-			else if(igv == 3 && jgv == 2)
+			else if((igv == 3 && jgv == 2) || (igv == 6 && jgv == 3) || (igv == 7 && jgv == 2))
 				gameboardvalid[igv][jgv] = 1;
-			else if(igv == 6 && jgv == 5)
+			else if((igv == 6 && jgv == 5) || (igv == 4 && jgv == 5 ))
 				gameboardvalid[igv][jgv] = 7;
 			else
 				gameboardvalid[igv][jgv] = 0;
@@ -671,6 +662,12 @@ void test_is_move_seq_valid(void)
 	struct move_seq *seq_dame = (struct move_seq *) malloc(sizeof(struct move_seq)); //Doit etre valide, mouvement de la dame sur la diagonale
 	if (seq_dame == NULL)
 		exit(EXIT_FAILURE);
+	struct move_seq *seq_dame2 = (struct move_seq *) malloc(sizeof(struct move_seq)); //Une dame ne peut pas passer au-dessus d'une pièce de la même couleur
+	if (seq_dame2 == NULL)
+		exit(EXIT_FAILURE);
+	struct move_seq *seq_dame3 = (struct move_seq *) malloc(sizeof(struct move_seq)); //Une dame ne peut pas passer au-dessus de deux pièces
+	if (seq_dame3 == NULL)
+		exit(EXIT_FAILURE);
 	struct move_seq *seq_caseoccupee = (struct move_seq *) malloc(sizeof(struct move_seq)); //Pion sur la case d'arrivée
 	if (seq_caseoccupee == NULL)
 		exit(EXIT_FAILURE);
@@ -681,12 +678,15 @@ void test_is_move_seq_valid(void)
 	struct coord coord_pn = {3,2};
 	struct coord coord_pb = {2,3};
 	struct coord coord_db = {6,5};
+	struct coord coord_db2 = {4,5};
 	struct coord casedevant = {2,2}; 
 	struct coord casederriere = {3,4}; 
 	struct coord casevide = {1,3}; 
 	struct coord sautecasevide = {0,1};  
 	struct coord mauvaisjoueur = {1,4};
-	struct coord dame = {2,1}; 
+	struct coord dame = {1,0}; 
+	struct coord dame2 = {1,2};
+	struct coord dame3 = {8,1};
 	struct coord valid = {4,1};
 	
 	(*seq_casedevant).c_old = coord_pb;
@@ -707,6 +707,12 @@ void test_is_move_seq_valid(void)
 	(*seq_dame).c_old = coord_db;
 	(*seq_dame).c_new = dame;
 	seq_dame -> next = NULL;
+	(*seq_dame2).c_old = coord_db2;
+	(*seq_dame2).c_new = dame2;
+	seq_dame2 -> next = NULL;
+	(*seq_dame3).c_old = coord_db2;
+	(*seq_dame3).c_new = dame3;
+	seq_dame3 -> next = NULL;
 	(*seq_caseoccupee).c_old = coord_pb;
 	(*seq_caseoccupee).c_new = coord_pn;
 	seq_caseoccupee -> next = NULL;
@@ -722,8 +728,10 @@ void test_is_move_seq_valid(void)
 	int nonvalid4 = is_move_seq_valid(gameval, seq_sautecasevide, NULL, coordcapture);
 	int nonvalid5 = is_move_seq_valid(gameval, seq_mauvaisjoueur, NULL, coordcapture);
 	int valid1 = is_move_seq_valid(gameval, seq_dame, NULL, coordcapture);
-	int nonvalid6 = is_move_seq_valid(gameval, seq_caseoccupee, NULL, coordcapture);
-	int nonvalid7 = is_move_seq_valid(gameval, seq_plusieurspions, seq_dame, coordcapture);
+	int nonvalid6 = is_move_seq_valid(gameval, seq_dame2, NULL, coordcapture);
+	int nonvalid7 = is_move_seq_valid(gameval, seq_dame3, NULL, coordcapture);
+	int nonvalid8 = is_move_seq_valid(gameval, seq_caseoccupee, NULL, coordcapture);
+	int nonvalid9 = is_move_seq_valid(gameval, seq_plusieurspions, seq_dame, coordcapture);
 
 	MY_CU_ASSERT(nonvalid1 == 0,"Un pion qui se déplace sur la case devant lui est considéré comme valide\n");
 	MY_CU_ASSERT(nonvalid2 == 0,"Un pion ne peut pas se déplacer en arrière\n");
@@ -731,8 +739,10 @@ void test_is_move_seq_valid(void)
 	MY_CU_ASSERT(nonvalid4 == 0,"Un pion ne peut pas sauter (comme pour prendre un pion) une case vide\n");
 	MY_CU_ASSERT(nonvalid5 == 0,"Le mouvement déplace un pion alors que c'est à l'autre joueur de jouer\n");
 	MY_CU_ASSERT(valid1 == 2,"La dame doit pouvoir se déplacer sur n'importe quelle case non-occupée de la diagonale\n");
-	MY_CU_ASSERT(nonvalid6 == 0,"Un pion ne peut pas terminer un mouvement sur une case occupée\n");
-	MY_CU_ASSERT(nonvalid7 == 0,"Un seul mouvement ne peut pas déplacer plusieurs pions différents\n");
+	MY_CU_ASSERT(nonvalid6 == 0, "Une dame ne peut pas passer au-dessus d'un pion de sa couleur\n");
+	MY_CU_ASSERT(nonvalid7 == 0, "Une dame ne peut pas passer au-dessus de deux pièces\n");
+	MY_CU_ASSERT(nonvalid8 == 0,"Un pion ne peut pas terminer un mouvement sur une case occupée\n");
+	MY_CU_ASSERT(nonvalid9 == 0,"Un seul mouvement ne peut pas déplacer plusieurs pions différents\n");
 	
 	free(coordcapture);
 	
@@ -742,12 +752,12 @@ void test_is_move_seq_valid(void)
 	free(seq_sautecasevide);
 	free(seq_mauvaisjoueur);
 	free(seq_dame);
+	free(seq_dame2);
+	free(seq_dame3);
 	free(seq_caseoccupee);
 	free(seq_plusieurspions);
 	
 	free_game(gameval);
-	
-	printf("Fin is_move_seq_valid\n");
 	
 }
 
@@ -762,8 +772,6 @@ void test_undo_moves(void)
 	verifdep(game1);
 	
 	free_game(game1);
-
-	printf("Fin undo_moves\n");
 	
 }
 
