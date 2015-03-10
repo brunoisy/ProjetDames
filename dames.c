@@ -25,81 +25,6 @@ const int pblanc  =5;
 const int dnoir   =3;
 const int dblanc  =7;
 
-/*
-int main (int argc, char * argv[]){
-
-	struct game * ng=new_game(10,10);
-
-	struct move * moves=(struct move *)malloc(sizeof(struct move));
-	struct move_seq * seq=(struct move_seq *)malloc(sizeof(struct move_seq));
-	struct move * moves2=(struct move *)malloc(sizeof(struct move));
-	struct move_seq * seq2=(struct move_seq *)malloc(sizeof(struct move_seq));
-
-	moves->next=NULL;
-	moves->seq=seq;
-	seq->next=NULL;
-	struct coord c_old;
-	struct coord c_new;
-	c_old.x=1;
-	c_old.y=6;
-	c_new.x=0;
-	c_new.y=5;
-	seq->c_old=c_old;
-	seq->c_new=c_new;
-
-	moves2->next=NULL;
-	moves2->seq=seq2;
-	seq2->next=NULL;
-	struct coord c_old2;
-	struct coord c_new2;
-	c_old2.x=0;
-	c_old2.y=3;
-	c_new2.x=1;
-	c_new2.y=4;
-	seq2->c_old=c_old2;
-	seq2->c_new=c_new2;
-
-	printf("\ntest apply_moves\n");
-	printf("%i",apply_moves(ng, moves));
-	print_board(ng);
-	printf("\n");
-	printf("%i",apply_moves(ng, moves2));
-	print_board(ng);
-	
-	printf("\ntest undo_moves\n");
-	undo_moves(ng,1);
-	print_board(ng);
-
-	free_moves(moves);
-	free_moves(moves2);
-	free_game(ng);
-
-	struct move_seq * seq= (struct move_seq *)malloc(sizeof(struct move_seq));
-	struct move_seq * seq2=(struct move_seq *)malloc(sizeof(struct move_seq));
-	struct coord c_old;
-	struct coord c_new;
-	struct coord c_old2;
-	struct coord c_new2;
-	c_old.x=1;
-	c_old.y=6;
-	c_new.x=0;
-	c_new.y=5;
-	seq->c_old=c_old;
-	seq->c_new=c_new;
-	seq->next=seq2;
-	c_old2.x=0;
-	c_old2.y=3;
-	c_new2.x=1;
-	c_new2.y=4;
-	seq2->c_old=c_old2;
-	seq2->c_new=c_new2;
-	struct move_seq * resultinv=reverse_seq(seq);
-	printf("(resultinv->c_old).x=%i\n",(resultinv->c_old).x);
-	printf("((resultinv->next)->c_old).x=%i\n",((resultinv->next)->c_old).x);
-	printf("(resultinv->next)->next=%p\n",(resultinv->next)->next);
-}
-*/
-
 
 extern struct game *new_game(int xsize, int ysize){
 	struct game * newG=(struct game *) malloc(sizeof(struct game));
@@ -217,7 +142,7 @@ extern int is_move_seq_valid(const struct game *game, const struct move_seq *seq
 	int deltax=xnew-xold;
 	int deltay=ynew-yold;
 	if(pvalue==0){ // si nous bougons un pion
-		if(abs(deltax)==1&&deltay==updir){ // si deplacement d'une case (sans prise):
+		if(abs(deltax)==1&&deltay==updir){ // si deplacement d'une case (sans prise)
 			if(rafle==0) // si premier deplacement du mouvement
 				return 1;
 			else // sinon (car le pion doit prendre une piece s'il fait partie d'une rafle)
@@ -233,7 +158,7 @@ extern int is_move_seq_valid(const struct game *game, const struct move_seq *seq
 				taken->x=xold+deltax/2;
 				taken->y=yold+deltay/2;
 				return 2;		
-			}		
+			}	
 		}
 		else // si deplacement illegal
 			return 0;
@@ -304,7 +229,7 @@ extern void print_board(const struct game *game){
 	int j;
 	for(j=0;j<10;j++){ // pr chaque ligne
 		for(i=0;i<10;i++){
-			printf(" %i",board[i][j]);// imprimer chaque element
+			printf(" %i", board[i][j]);
 		}
 		printf("\n");
 	}
